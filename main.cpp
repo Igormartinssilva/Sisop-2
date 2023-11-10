@@ -13,18 +13,16 @@ string login_user()
 {
     string nameUser;
 
-    cout << "digite seu nome de usuario: ";
+    cout << "Digite seu nome de usuario: ";
     cin >> nameUser;
 
-    while ( nameUser.length() < 4 )
+    while ( nameUser.length() < 4 || nameUser.length() > 20)
     {
-        cout << "\nnome de usuario curto demais, digite pelo menos 4 caracteres: ";
+        cout << "\nNome de usuario deve ter entre 4 e 20 caracteres.Digite novamete: ";
         cin >> nameUser;
-    }
-    
+    } 
    
     return nameUser;
-
 }
 
 
@@ -36,13 +34,11 @@ int main()
 {
     string nomeLogin;
 
-
-    printf ("ola, mundo");
     nomeLogin = login_user();
 
-    printf("\nO  nome do usuário é: %s", nomeLogin.c_str() );
+    printf("\nO  nome do usuario é: %s", nomeLogin.c_str() );
 
-    cout << "Login realizado com sucesso\n";
+    cout << "\n\nLogin realizado com sucesso\n";
 
     return 0;
 }
