@@ -20,6 +20,21 @@ int generateRandomId()
     return randomId;
 }
 
+string getCurrentDateTime()
+{
+    // Obtém o tempo atual
+    time_t now = time(0);
+    
+    // Converte o tempo para uma estrutura de tempo local
+    tm *ltm = localtime(&now);
+
+    // Formata a data e hora como uma string
+    char buffer[80];
+    strftime(buffer, sizeof(buffer), "%Y-%m-%d %H:%M:%S", ltm);
+
+    return buffer;
+}
+
 usermains login_user()
 {
     usermains user;
@@ -38,7 +53,7 @@ usermains login_user()
     return user;
 }
 
-string sendMesage(usermains user)
+usermains sendMessage(usermains user)
 {
 
     cout << "\nDigite sua mensagem: ";
@@ -50,7 +65,8 @@ string sendMesage(usermains user)
         cout << "\n\n Mensagem longa demais, digite menos que 128 caracteres!: ";
         cin >> user.messg;
     }
-    return user.messg;
+    user.timestamp = getCurrentDateTime();
+    return user;
 }
 
 
@@ -65,9 +81,8 @@ int main()
     printf("\nO  nome do usuario e: %s e seu id: %d", login.userName.c_str(), login.id );
 
     cout << "\n\nLogin realizado com sucesso\n";
-    sendMesage(login);
-
-    //tem que mandar o id do usuário, nome e mensagem pro servidor, tabela hash para guardar os usuarios?
+    login = sendMessage(login);
+    cout << "Data e hora: " << login.timestamp << endl;
 
     return 0;
 }

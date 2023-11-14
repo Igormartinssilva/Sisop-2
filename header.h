@@ -30,7 +30,7 @@ typedef struct usermains
     string userName;
     int id;
     string messg;
-    int timestamp;
+    string timestamp;
 }usermains;
 
 
