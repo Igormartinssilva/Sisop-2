@@ -1,7 +1,13 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <stdint.h>
+#include <iostream>
+#include <string.h>
+#include <cstdlib>
+#include <ctime>
+#include <string>
 
+using namespace std;
 
 typedef struct __packet{
     uint16_t type; //Tipo do pacote (p.ex. DATA | CMD)
@@ -19,5 +25,12 @@ typedef struct __notification{
     const char* _string; //Mensagem
 } notification;
 
+typedef struct usermains
+{
+    string userName;
+    int id;
+    string messg;
+    int timestamp;
+}usermains;
 
 
