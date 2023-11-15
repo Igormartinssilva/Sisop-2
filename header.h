@@ -7,6 +7,7 @@
 #include <ctime>
 #include <string>
 
+
 using namespace std;
 
 typedef struct __packet{
@@ -34,3 +35,7 @@ typedef struct usermains
 }usermains;
 
 
+int generateRandomId();
+string getCurrentDateTime();
+usermains login_user();
+usermains sendMessage(usermains user);

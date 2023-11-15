@@ -1,28 +1,31 @@
 {
+    "version": "2.0.0",
     "tasks": [
         {
-            "type": "cppbuild",
-            "label": "C/C++: g++.exe arquivo de build ativo",
-            "command": "C:\\MinGW\\bin\\g++.exe",
+            "label": "build",
+            "type": "shell",
+            "command": "g++",
             "args": [
-                "-fdiagnostics-color=always",
                 "-g",
-                "${file}",
+                "main.cpp",
+                "usuario.cpp",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe"
-            ],
-            "options": {
-                "cwd": "${fileDirname}"
-            },
-            "problemMatcher": [
-                "$gcc"
+                "meu_programa"
             ],
             "group": {
                 "kind": "build",
                 "isDefault": true
-            },
-            "detail": "Tarefa gerada pelo Depurador."
+            }
+        },
+        {
+            "label": "run",
+            "type": "shell",
+            "command": "./meu_programa", // O nome do executável gerado
+            "dependsOn": "build",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            }
         }
-    ],
-    "version": "2.0.0"
+    ]
 }
