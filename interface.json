@@ -1,0 +1,21 @@
+{
+  "interfaces": {
+    "menu_principal": {
+      "descricao": "Bem-vindo ao Menu Principal",
+      "opcoes": [
+        "1. Escrever Mensagem",
+        "2. Ler Mensagens",
+        "3. Sair"
+      ]
+    },
+    "escrever_mensagem": {
+      "descricao": "Escrever Mensagem",
+      "instrucao": "Digite a mensagem que deseja enviar:"
+    },
+    "ler_mensagens": {
+      "descricao": "Ler Mensagens",
+      "instrucao": "Aqui estão as mensagens disponíveis:"
+    }
+  }
+}
+
