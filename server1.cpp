@@ -7,6 +7,10 @@
 #define PORT 4000
 #define BUFFER_SIZE 256
 
+#define RED_TEXT "\033[1;31m"
+#define GREEN_TEXT "\033[1;32m"
+#define RESET_TEXT "\033[0m"
+
 struct Message {
     int userId;
     char text[BUFFER_SIZE];
@@ -51,8 +55,9 @@ int main() {
         }
 
         // Print the message along with the user ID
-        std::cout << "Received message from User ID " << receivedMessage.userId
-                  << ": " << receivedMessage.text << std::endl;
+        std::cout << RED_TEXT << "Received message from User ID " << receivedMessage.userId
+          << ": " << RESET_TEXT << GREEN_TEXT << receivedMessage.text << RESET_TEXT << std::endl;
+
 
         // Send an acknowledgment back to the client
         n = sendto(sockfd, &receivedMessage, sizeof(receivedMessage), 0,
