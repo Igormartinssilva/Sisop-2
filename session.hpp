@@ -1,13 +1,15 @@
-#include <stdc++.h>
+#pragma once
+
+#include "client.hpp"
 #include "user.hpp"
 #include "message.hpp"
+#include <fstream>
 
-using namespace std;
+class Session {
+private:
+    Client client;
 
-class Session{
-    private:
-
-    public:
-        void sendMessage(Message msg);
-
-}
+public:
+    Session();
+    void sendMessage(Message msg);
+};

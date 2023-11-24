@@ -1,3 +1,4 @@
+#pragma once
 #include <bits/stdc++.h>
 
 class User{
@@ -5,6 +6,7 @@ class User{
 		int userId;
 		std::string username;
 	public:
-		void sendMessage(std::string message);
-		void loadTimeLine();
+		User();
+		User(int);
+		int getUserId();
 };
