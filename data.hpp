@@ -1,34 +1,70 @@
-#include <bits/stdc++.h>
+#ifndef DATA_HPP
+#define DATA_HPP
 
-class ServerNotification{
-	public:
+#include <vector>
+#include <map>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <queue>
+
+namespace twt{
+	struct ServerNotification{
 		int notificationId;
 		int userPostId;
 		char message;
 		int messageSize;
 		int followersToSend;
-};
+	};
 
-class UserNotification{
-	public:
+	struct UserNotification{
 		int userPostId;
 		int userReceiverId;
 		int notificationId;
-};
+	};
 
-class FollowersGraph{
-	private:
-		std::vector<vector<int>> graph;
-	public:
-		void follow(int followerId, int followingId);
-		void getFollowers(int userId);
+	struct User{
+		std::string username;
+		int userId;
+	};
+
+	class Followers{
+		private:
+			std::unordered_map<int, std::unordered_set<int>> followers;
+		public:
+			void follow(int followerId, int followingId);
+			std::unordered_set<int> getFollowers(int userId);
+	};
+
+	class UsersList{
+		private:
+			int nextId = 1;
+			std::unordered_map<int, UserInfo> users;
+			std::unordered_map<std::string, int> usersId;
+			int getUserId(std::string username);
+		public:
+			void appendUser(std::string username);
+			void removeUser(int userId);
+			int createSession(std::string username);
+	};
+
+	class UserInfo {
+		private:
+			User user;
+			int activeSessions;
+		public:
+			UserInfo();
+			UserInfo(int userId, std::string username);
+			std::string getUsername();
+			bool maxSessionsReached();
+			void createSession();
+			
+	};
+
+	struct Message {
+		User sender;
+		std::string content;
+	};
 }
 
-class UsersList{
-	private:
-		int nextId;
-		std::vector<vector<UserInfo>> users;
-	public:
-		void appendUser(char username);
-		void removeUser(char username);
-}
+#endif
