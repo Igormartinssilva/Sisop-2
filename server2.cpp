@@ -12,6 +12,7 @@
 #include "data.hpp"
 #include "constraints.hpp"
 
+
 class UDPServer {
 public:
     UDPServer(int port);
@@ -32,6 +33,7 @@ private:
     std::mutex mutex;
     std::condition_variable cv;
     bool running;
+    std::unordered_map<int, std::queue<std::string>> messageBuffer;
 };
 
 UDPServer::UDPServer(int port) {
@@ -99,6 +101,9 @@ void UDPServer::processMessage(const sockaddr_in& clientAddress, const std::stri
     } else {
         // Lógica para processar outros comandos
     }
+
+    
+
 }
 
 void UDPServer::handleLogin(const sockaddr_in& clientAddress, const std::string& username) {
@@ -124,10 +129,19 @@ void UDPServer::handleReadRequest(const sockaddr_in& clientAddress, const std::s
 
     // Lógica para recuperar mensagens do buffer para o usuário específico e enviar de volta
     // ...
-
+    std::queue<std::string>& userMessages = messageBuffer[userId];
     // Exemplo de resposta
-    std::string replyMessage = "MESSAGES_HERE";
-    sendto(serverSocket, replyMessage.c_str(), replyMessage.length(), 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
+     // Enviar resposta de recebimento ao cliente
+    std::string replyMessage = "Server received your message!";
+    ssize_t sentBytes = sendto(serverSocket, replyMessage.c_str(), replyMessage.length(), 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
+
+    if( sentBytes == -1){
+        perror("ERROR to sending message");
+        //pode-se add outra trativas como encerrar conexao ou tentar reenviar a menssagem.
+    }
+    else{
+        std::cout << "Sent " << sentBytes << " bytes to the client. \n";
+    }
 }
 
 void UDPServer::broadcastMessage(const twt::Message& message) {
