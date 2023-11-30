@@ -26,10 +26,10 @@ void Client::setServer(const char *hostname) {
     serv_addr.sin_addr = *((struct in_addr *)server->h_addr);
 }
 
-void Client::sendMessage(struct Bitstream bitstream) {
+void Client::sendMessage(struct twt::Package bitstream) {
     int n;
     // Send the bitstream to the server
-    n = sendto(sockfd, &bitstream, sizeof(bitstream), 0,
+    n = sendto(sockfd, &bitstream, sizeof(twt::Package), 0,
            (const struct sockaddr *)&serv_addr, sizeof(serv_addr));
 
     if (n < 0) {
@@ -37,12 +37,12 @@ void Client::sendMessage(struct Bitstream bitstream) {
         std::cerr << "Error code: " << errno << std::endl;
     }
     // Receive an acknowledgment into a temporary buffer
-    struct Bitstream ack;
-    n = recvfrom(sockfd, &ack, sizeof(Bitstream), 0, nullptr, nullptr);
+    struct twt::Package ack;
+    n = recvfrom(sockfd, &ack, sizeof(twt::Package), 0, nullptr, nullptr);
     if (n < 0){
         perror("ERROR recvfrom");
         std::cerr << "Error code: " << errno << std::endl;
     }
     // Print the acknowledgment
-    std::cout << "Got an ack: " << ack.message << std::endl;
+    std::cout << "Got an ack: " << ack.payload << std::endl;
 }

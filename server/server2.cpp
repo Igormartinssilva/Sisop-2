@@ -51,7 +51,7 @@ void UDPServer::handleMessages() {
 }
 
 void UDPServer::processMessage(const sockaddr_in& clientAddress, const std::string& message) {
-    twt::Package pack twt::deserializePackage(message);
+    twt::Package pack = twt::deserializePackage(message);
     
     switch(pack.type){
         case twt::Mensagem:
@@ -63,6 +63,8 @@ void UDPServer::processMessage(const sockaddr_in& clientAddress, const std::stri
         case twt::Exit:
             break;
     }
+
+    std::cout << pack.payload << std::endl;
 }
 
 void UDPServer::handleLogin(const sockaddr_in& clientAddress, const std::string& username) {

@@ -14,16 +14,17 @@ Message::Message(){
     this->size = 0;
 }
 
-struct Bitstream Message::createMessageBitstream(){
-    struct Bitstream bitstream;
-    bitstream.size = message.size();
-    bitstream.userId = userId;
+struct twt::Package Message::createMessageBitstream(){
+    struct twt::Package package;
+    time_t now = time(0);
+    package.timestamp = now;
     if (message.size() < MSG_SIZE){
-        strcpy(bitstream.message, message.c_str());
-        strcpy(bitstream.type, "POST");
+        package.type = twt::Mensagem;
+        package.sequence_number = 0; // TODO: adicionar timestamp
+        strcpy(package.payload, message.c_str());
     }
     else
         cerr << "Message greater than buffer size" << endl;
-    return bitstream;
+    return package;
 }
 

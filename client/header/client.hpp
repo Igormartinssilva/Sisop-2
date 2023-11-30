@@ -8,6 +8,7 @@
 #include <arpa/inet.h>
 #include <netdb.h>
 #include "message.hpp"
+#include "../../common/header/data.hpp"
 
 class Client {
 private:
@@ -18,7 +19,7 @@ public:
     Client();
     ~Client();
     void setServer(const char *hostname);
-    void sendMessage(struct Bitstream);
+    void sendMessage(struct twt::Package);
 };
 
 #endif // UDP_CLIENT_H

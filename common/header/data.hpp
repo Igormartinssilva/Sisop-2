@@ -4,10 +4,13 @@
 #include <vector>
 #include <map>
 #include <string>
+#include <fstream>
+#include <cstring>
 #include <unordered_map>
 #include <unordered_set>
 #include <queue>
 #include <sstream>
+#include "../../asserts/constraints.hpp"
 
 namespace twt{
 
@@ -15,7 +18,7 @@ namespace twt{
 		uint16_t type;
 		uint16_t sequence_number;
 		uint16_t timestamp;
-		std::string payload;
+		char payload[MSG_SIZE];
 	};
 
 	enum PackageType : uint16_t {

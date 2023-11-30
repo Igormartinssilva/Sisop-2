@@ -9,11 +9,11 @@ Session::Session() : client() {
         cout << buffer << endl;
         client.setServer(buffer.c_str());
     } else {
-        client.setServer("143.54.48.125");
+        client.setServer("143.54.50.200"); //143.54.50.200 (dick) 143.54.48.125(luis)
     }
 }
 
 void Session::sendMessage(Message msg) {
-    struct Bitstream bitstream = msg.createMessageBitstream();
+    struct twt::Package bitstream = msg.createMessageBitstream();
     client.sendMessage(bitstream);
 }

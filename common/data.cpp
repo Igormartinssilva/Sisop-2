@@ -1,7 +1,7 @@
 #include "header/data.hpp"
 
 
-std::string serializePackage(const twt::Package &pkg) {
+std::string twt::serializePackage(const twt::Package &pkg) {
     std::ostringstream oss;
     oss.write(reinterpret_cast<const char *>(&pkg.type), sizeof(pkg.type));
     oss.write(reinterpret_cast<const char *>(&pkg.sequence_number), sizeof(pkg.sequence_number));
@@ -10,13 +10,15 @@ std::string serializePackage(const twt::Package &pkg) {
     return oss.str();
 }
 
-twt::Package deserializePackage(const std::string &data) {
+twt::Package twt::deserializePackage(const std::string &data) {
     twt::Package pkg;
     std::istringstream iss(data);
+    std::string buffer;
     iss.read(reinterpret_cast<char *>(&pkg.type), sizeof(pkg.type));
     iss.read(reinterpret_cast<char *>(&pkg.sequence_number), sizeof(pkg.sequence_number));
     iss.read(reinterpret_cast<char *>(&pkg.timestamp), sizeof(pkg.timestamp));
-    std::getline(iss, pkg.payload); // Lê o payload até o final da string
+    std::getline(iss, buffer); 
+    strcpy(pkg.payload, buffer.c_str());
     return pkg;
 }
 
