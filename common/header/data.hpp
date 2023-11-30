@@ -36,18 +36,6 @@ namespace twt{
 			std::unordered_set<int> getFollowers(int userId);
 	};
 
-	class UsersList{
-		private:
-			int nextId = 1;
-			std::unordered_map<int, UserInfo> users;
-			std::unordered_map<std::string, int> usersId;
-			int getUserId(std::string username);
-		public:
-			void appendUser(std::string username);
-			void removeUser(int userId);
-			int createSession(std::string username);
-	};
-
 	class UserInfo {
 		private:
 			User user;
@@ -59,6 +47,18 @@ namespace twt{
 			bool maxSessionsReached();
 			void createSession();
 			
+	};
+
+	class UsersList{
+		private:
+			int nextId = 1;
+			std::unordered_map<int, UserInfo> users;
+			std::unordered_map<std::string, int> usersId;
+			int getUserId(std::string username);
+		public:
+			void appendUser(std::string username);
+			void removeUser(int userId);
+			int createSession(std::string username);
 	};
 
 	struct Message {

@@ -1,40 +1,4 @@
-#include <iostream>
-#include <vector>
-#include <unistd.h>
-#include <unordered_map>
-#include <unordered_set>
-#include <queue>
-#include <thread>
-#include <mutex>
-#include <condition_variable>
-#include <cstring>
-#include <arpa/inet.h>
-#include "data.hpp"
-#include "constraints.hpp"
-
-
-class UDPServer {
-public:
-    UDPServer(int port);
-    ~UDPServer();
-    void start();
-
-private:
-    void handleMessages();
-    void processMessage(const sockaddr_in& clientAddress, const std::string& message);
-    void handleLogin(const sockaddr_in& clientAddress, const std::string& username);
-    void handleReadRequest(const sockaddr_in& clientAddress, const std::string& username);
-    void broadcastMessage(const twt::Message& message);
-
-    int serverSocket;
-    twt::Followers followers;
-    twt::UsersList usersList;
-    std::queue<twt::Message> messageBuffer;
-    std::mutex mutex;
-    std::condition_variable cv;
-    bool running;
-    std::unordered_map<int, std::queue<std::string>> messageBuffer;
-};
+#include "header/server2.hpp"
 
 UDPServer::UDPServer(int port) {
     serverSocket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -108,7 +72,7 @@ void UDPServer::processMessage(const sockaddr_in& clientAddress, const std::stri
 
 void UDPServer::handleLogin(const sockaddr_in& clientAddress, const std::string& username) {
     std::lock_guard<std::mutex> lock(mutex);
-    bool id = usersList.createSession(username);
+    int id = usersList.createSession(username);
 
     if (id == -1){
         // Usuário já está logado, enviar uma resposta
@@ -129,7 +93,7 @@ void UDPServer::handleReadRequest(const sockaddr_in& clientAddress, const std::s
 
     // Lógica para recuperar mensagens do buffer para o usuário específico e enviar de volta
     // ...
-    std::queue<std::string>& userMessages = messageBuffer[userId];
+    //std::queue<std::string>& userMessages = messageBuffer;
     // Exemplo de resposta
      // Enviar resposta de recebimento ao cliente
     std::string replyMessage = "Server received your message!";
@@ -146,7 +110,8 @@ void UDPServer::handleReadRequest(const sockaddr_in& clientAddress, const std::s
 
 void UDPServer::broadcastMessage(const twt::Message& message) {
     std::lock_guard<std::mutex> lock(mutex);
-    messageBuffer.push(message);
+    std::cout << "post done" << std::endl;
+    //messageBuffer.insert(message);
     cv.notify_all();  // Notifica todos os threads bloqueados na condição
 }
 

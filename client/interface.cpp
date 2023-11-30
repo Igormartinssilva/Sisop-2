@@ -1,6 +1,6 @@
-#include "interface.hpp"
+#include "header/interface.hpp"
 
-Parser::Parsere(const std::string& configFile) {
+Parser::Parser(const std::string& configFile) {
     std::ifstream file(configFile);
     std::stringstream buffer;
     buffer << file.rdbuf();
