@@ -18,8 +18,10 @@ struct Bitstream Message::createMessageBitstream(){
     struct Bitstream bitstream;
     bitstream.size = message.size();
     bitstream.userId = userId;
-    if (message.size() < BUFFER_SIZE)
+    if (message.size() < MSG_SIZE){
         strcpy(bitstream.message, message.c_str());
+        strcpy(bitstream.type, "POST");
+    }
     else
         cerr << "Message greater than buffer size" << endl;
     return bitstream;

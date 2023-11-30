@@ -33,13 +33,14 @@ void UDPServer::handleMessages() {
         sockaddr_in clientAddress;
         socklen_t clientSize = sizeof(clientAddress);
 
-        char buffer[1024];
+        char buffer[BUFFER_SIZE];
         memset(buffer, 0, sizeof(buffer));
 
         int bytesRead = recvfrom(serverSocket, buffer, sizeof(buffer), 0, (struct sockaddr*)&clientAddress, &clientSize);
 
         if (bytesRead > 0) {
             std::string message(buffer);
+            std::cout << message << std::endl;
             processMessage(clientAddress, message);
         }
     }

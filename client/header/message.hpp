@@ -3,12 +3,14 @@
 #include <bits/stdc++.h>
 #include "user.hpp"
 #include "client.hpp"
+#include "../../asserts/constraints.hpp"
 
 using namespace std;
 
 struct Bitstream{
-    int userId;
+    char type[TYPE_SIZE];
     char message[BUFFER_SIZE];
+    int userId;
     int size;
 };
 

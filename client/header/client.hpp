@@ -1,8 +1,7 @@
 #pragma once
 #ifndef UDP_CLIENT_H
 #define UDP_CLIENT_H
-#define PORT 4000
-#define BUFFER_SIZE 1024
+#include "../../asserts/constraints.hpp"
 #include <iostream>
 #include <cstring>
 #include <unistd.h>

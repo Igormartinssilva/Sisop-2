@@ -1,13 +1,15 @@
 #include "header/session.hpp"
 
 Session::Session() : client() {
-    ifstream file("host.cache");
+    ifstream file("ip.txt"); // TODO: generalize to FILE_IP define directive
     if (file.is_open()) {
         string buffer;
         getline(file, buffer);
+        cout << "Hello" << endl;
+        cout << buffer << endl;
         client.setServer(buffer.c_str());
     } else {
-        // Handle file open failure
+        client.setServer("143.54.48.125");
     }
 }
 

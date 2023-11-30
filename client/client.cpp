@@ -29,10 +29,11 @@ void Client::setServer(const char *hostname) {
 void Client::sendMessage(struct Bitstream bitstream) {
     int n;
     // Send the bitstream to the server
-    n = sendto(sockfd, &bitstream, sizeof(Bitstream), 0,
-               (const struct sockaddr *)&serv_addr, sizeof(serv_addr));
-    if (n < 0){
-        perror("ERROR sendto");
+    n = sendto(sockfd, &bitstream, sizeof(bitstream), 0,
+           (const struct sockaddr *)&serv_addr, sizeof(serv_addr));
+
+    if (n < 0) {
+        perror("ERROR in sendto");
         std::cerr << "Error code: " << errno << std::endl;
     }
     // Receive an acknowledgment into a temporary buffer
