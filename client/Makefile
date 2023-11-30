@@ -1,0 +1,28 @@
+CC = g++
+CFLAGS = -std=c++11 -Wall
+BIN_DIR = ../bin
+HEADER_DIR = ../header
+
+# Lista de arquivos fonte
+SOURCES = client.cpp client_interface.cpp message.cpp session.cpp user.cpp 
+OBJECTS = $(SOURCES: %.cpp=$(BIN_DIR)/%.o)
+
+# Nome do executável
+EXECUTABLE = $(BIN_DIR)/client_executable
+
+all: $(BIN_DIR) $(HEADER_DIR) $(EXECUTABLE)
+
+$(BIN_DIR):
+	mkdir -p $(BIN_DIR)
+
+$(HEADER_DIR):
+	mkdir -p $(HEADER_DIR)
+
+$(EXECUTABLE): $(OBJECTS)
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(BIN_DIR)/%.o: %.cpp
+	$(CC) $(CFLAGS) -c -o $@ $<
+
+clean:
+	rm -rf $(BIN_DIR) $(HEADER_DIR) $(EXECUTABLE)

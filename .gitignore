@@ -23,12 +23,6 @@ install_manifest.txt
 *.so
 *.dll
 
-# Ignore files generated during the build process
-Makefile
-*.mk
-*.make
-*.dep
-
 # Ignore any files containing sensitive information
 credentials.txt
 
@@ -37,7 +31,6 @@ credentials.txt
 
 # Ignore macOS system files
 .DS_Store
-
 # Ignore temporary files
 *.tmp
 
