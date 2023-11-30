@@ -7,8 +7,27 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <queue>
+#include <sstream>
 
 namespace twt{
+
+	struct Package {
+		uint16_t type;
+		uint16_t sequence_number;
+		uint16_t timestamp;
+		std::string payload;
+	};
+
+	enum PackageType : uint16_t {
+		Mensagem = 0,
+		Login,
+		Follow,
+		Exit
+	};
+
+	std::string serializePackage(const Package &pkg);
+	Package deserializePackage(const std::string &data);
+
 	struct ServerNotification{
 		int notificationId;
 		int userPostId;

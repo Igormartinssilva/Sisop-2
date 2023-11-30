@@ -1,5 +1,9 @@
 #include "header/server2.hpp"
 
+#include <iostream>
+#include <sstream>
+#include <string>
+
 UDPServer::UDPServer(int port) {
     serverSocket = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -47,28 +51,18 @@ void UDPServer::handleMessages() {
 }
 
 void UDPServer::processMessage(const sockaddr_in& clientAddress, const std::string& message) {
-    std::string command, content;
-    size_t pos = message.find(' ');
-
-    if (pos != std::string::npos) {
-        command = message.substr(0, pos);
-        content = message.substr(pos + 1);
-    } else {
-        command = message;
-    }
-
-    if (command == "LOGIN") {
-        handleLogin(clientAddress, content);
-    } else if (command == "READ") {
-        handleReadRequest(clientAddress, content);
-    } else if (command == "POST") {
-        broadcastMessage({{"username", 15}, content});
-    } else {
-        // Lógica para processar outros comandos
-    }
-
+    twt::Package pack twt::deserializePackage(message);
     
-
+    switch(pack.type){
+        case twt::Mensagem:
+            break;
+        case twt::Follow:
+            break;
+        case twt::Login:
+            break;
+        case twt::Exit:
+            break;
+    }
 }
 
 void UDPServer::handleLogin(const sockaddr_in& clientAddress, const std::string& username) {
