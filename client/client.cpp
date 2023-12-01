@@ -26,7 +26,7 @@ void Client::setServer(const char *hostname) {
     serv_addr.sin_addr = *((struct in_addr *)server->h_addr);
 }
 
-void Client::sendMessage(struct twt::Package bitstream) {
+void Client::sendMessage(std::vector<char> bitstream) {
     int n;
     // Send the bitstream to the server
     n = sendto(sockfd, &bitstream, sizeof(twt::Package), 0,

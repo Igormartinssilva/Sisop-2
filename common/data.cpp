@@ -1,26 +1,54 @@
 #include "header/data.hpp"
+#include <iostream>
+#include <cstdint>
+#include <arpa/inet.h>
+#include "header/data.hpp"
+#include <iostream>
+#include <cassert>
+#define MAGIC_NUMBER 32
+#include <cstdint>
 
+namespace twt {
 
-std::string twt::serializePackage(const twt::Package &pkg) {
-    std::ostringstream oss;
-    oss.write(reinterpret_cast<const char *>(&pkg.type), sizeof(pkg.type));
-    oss.write(reinterpret_cast<const char *>(&pkg.sequence_number), sizeof(pkg.sequence_number));
-    oss.write(reinterpret_cast<const char *>(&pkg.timestamp), sizeof(pkg.timestamp));
-    oss << pkg.payload;
-    return oss.str();
+    std::vector<char> serializePackage(const Package &pkg) {
+        assert(BUFFER_SIZE >= 6); // Ensure there is enough space for the header
+
+        std::vector<char> serializedData(BUFFER_SIZE);
+
+        // Convert to network byte order (big-endian)
+        uint16_t typeN = htons(pkg.type);
+        uint16_t seqNumN = htons(pkg.sequence_number);
+        uint16_t timestampN = htons(pkg.timestamp);
+
+        std::memcpy(serializedData.data(), &typeN, sizeof(typeN));
+        std::memcpy(serializedData.data() + 2, &seqNumN, sizeof(seqNumN));
+        std::memcpy(serializedData.data() + 4, &timestampN, sizeof(timestampN));
+        std::memcpy(serializedData.data() + 6, pkg.payload, BUFFER_SIZE - 6);
+
+        return serializedData;
+    }
+
+    Package deserializePackage(const std::vector<char> &data) {
+        assert(data.size() >= 6); // Ensure there is enough data to deserialize the header
+
+        Package pkg;
+
+        std::memcpy(&pkg.type, data.data() + MAGIC_NUMBER + 0, sizeof(pkg.type));
+        std::memcpy(&pkg.sequence_number, data.data() + MAGIC_NUMBER + 2, sizeof(pkg.sequence_number));
+        std::memcpy(&pkg.timestamp, data.data() + MAGIC_NUMBER + 4, sizeof(pkg.timestamp));
+
+        // Convert back to host byte order
+        //pkg.type = ntohs(pkg.type);
+        //pkg.sequence_number = ntohs(pkg.sequence_number);
+        //pkg.timestamp = ntohs(pkg.timestamp);
+
+        size_t payloadSize = std::min(data.size() - 6, sizeof(pkg.payload));
+        std::memcpy(pkg.payload, data.data() + MAGIC_NUMBER + 6, payloadSize);
+
+        return pkg;
+    }
 }
 
-twt::Package twt::deserializePackage(const std::string &data) {
-    twt::Package pkg;
-    std::istringstream iss(data);
-    std::string buffer;
-    iss.read(reinterpret_cast<char *>(&pkg.type), sizeof(pkg.type));
-    iss.read(reinterpret_cast<char *>(&pkg.sequence_number), sizeof(pkg.sequence_number));
-    iss.read(reinterpret_cast<char *>(&pkg.timestamp), sizeof(pkg.timestamp));
-    std::getline(iss, buffer); 
-    strcpy(pkg.payload, buffer.c_str());
-    return pkg;
-}
 
 void twt::Followers::follow(int followerId, int followingId){
     followers[followingId].insert(followerId);

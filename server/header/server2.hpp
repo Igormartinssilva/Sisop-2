@@ -22,12 +22,13 @@ public:
 
 private:
     void handleMessages();
-    void processMessage(const sockaddr_in& clientAddress, const std::string& message);
+    void processMessage();
     void handleLogin(const sockaddr_in& clientAddress, const std::string& username);
     void handleReadRequest(const sockaddr_in& clientAddress, const std::string& username);
     void broadcastMessage(const twt::Message& message);
 
     int serverSocket;
+    std::queue<std::pair<const sockaddr_in&, const std::vector<char>>> processingBuffer;
     twt::Followers followers;
     twt::UsersList usersList;
     std::queue<twt::Message> messageBuffer;

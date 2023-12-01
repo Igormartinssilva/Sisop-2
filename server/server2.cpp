@@ -24,12 +24,14 @@ void UDPServer::start() {
 
     running = true;
     std::thread messageThread(&UDPServer::handleMessages, this);
+    std::thread processMessageThread(&UDPServer::processMessage, this);
 
     while (running) {
         // Processamento adicional pode ser feito aqui
     }
 
     messageThread.join();
+    processMessageThread.join();
 }
 
 void UDPServer::handleMessages() {
@@ -37,34 +39,57 @@ void UDPServer::handleMessages() {
         sockaddr_in clientAddress;
         socklen_t clientSize = sizeof(clientAddress);
 
-        char buffer[BUFFER_SIZE];
-        memset(buffer, 0, sizeof(buffer));
+        std::vector<char> buffer(BUFFER_SIZE);
+        memset(buffer.data(), 0, sizeof(buffer));
 
-        int bytesRead = recvfrom(serverSocket, buffer, sizeof(buffer), 0, (struct sockaddr*)&clientAddress, &clientSize);
+        int bytesRead = recvfrom(serverSocket, buffer.data(), buffer.size(), 0, (struct sockaddr*)&clientAddress, &clientSize);
+        if (bytesRead > 0) {            
+            std::lock_guard<std::mutex> lock(mutex);
+            processingBuffer.push({clientAddress, buffer});
 
-        if (bytesRead > 0) {
-            std::string message(buffer);
-            std::cout << message << std::endl;
-            processMessage(clientAddress, message);
         }
     }
 }
 
-void UDPServer::processMessage(const sockaddr_in& clientAddress, const std::string& message) {
-    twt::Package pack = twt::deserializePackage(message);
-    
-    switch(pack.type){
-        case twt::Mensagem:
-            break;
-        case twt::Follow:
-            break;
-        case twt::Login:
-            break;
-        case twt::Exit:
-            break;
-    }
+void UDPServer::processMessage() {
+    while (running){
+        std::lock_guard<std::mutex> lock(mutex);
+        if (!processingBuffer.empty()) {
+            std::pair<const sockaddr_in&, const std::vector<char>&> bufferValue = processingBuffer.front();
+            processingBuffer.pop();
+            const sockaddr_in& clientAddress = bufferValue.first;
+            std::vector<char> message = bufferValue.second;
+            std::string returnMessage("Exit request received");
+            
+            
+            twt::Package pack = twt::deserializePackage(message);
+            switch(pack.type){
+                case twt::Mensagem:
+                    returnMessage = "Message request received";
+                    break;
+                case twt::Follow:
+                    returnMessage = "Follow request received";
+                    break;
+                case twt::Login:
+                    returnMessage = "Login request received";
+                    break;
+                case twt::Exit:
+                    returnMessage = "Exit request received";
+                    break;
+            }
+            std::cout << returnMessage << std::endl;
+            sendto(serverSocket, &returnMessage, returnMessage.length(), 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
 
-    std::cout << pack.payload << std::endl;
+            std::cout << "type: " << pack.type << std::endl;
+            std::cout << "timestamp: " << pack.timestamp << std::endl;
+            std::cout << "sequence number: " << pack.sequence_number << std::endl;
+            std::cout << "payload: " << pack.payload << std::endl;
+            
+        }
+        else{
+            sleep(0.1);
+        }
+    }
 }
 
 void UDPServer::handleLogin(const sockaddr_in& clientAddress, const std::string& username) {
@@ -84,7 +109,7 @@ void UDPServer::handleLogin(const sockaddr_in& clientAddress, const std::string&
 }
 
 void UDPServer::handleReadRequest(const sockaddr_in& clientAddress, const std::string& userIdStr) {
-    int userId = std::stoi(userIdStr);
+    //int userId = std::stoi(userIdStr);
 
     std::lock_guard<std::mutex> lock(mutex);
 

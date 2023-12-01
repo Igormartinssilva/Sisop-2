@@ -17,10 +17,10 @@ Message::Message(){
 struct twt::Package Message::createMessageBitstream(){
     struct twt::Package package;
     time_t now = time(0);
-    package.timestamp = now;
+    package.timestamp = 100;
     if (message.size() < MSG_SIZE){
         package.type = twt::Mensagem;
-        package.sequence_number = 0; // TODO: adicionar timestamp
+        package.sequence_number = 57; // TODO: adicionar timestamp
         strcpy(package.payload, message.c_str());
     }
     else

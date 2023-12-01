@@ -19,7 +19,7 @@ public:
     Client();
     ~Client();
     void setServer(const char *hostname);
-    void sendMessage(struct twt::Package);
+    void sendMessage(std::vector<char>);
 };
 
 #endif // UDP_CLIENT_H

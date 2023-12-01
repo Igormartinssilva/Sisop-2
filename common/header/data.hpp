@@ -28,8 +28,8 @@ namespace twt{
 		Exit
 	};
 
-	std::string serializePackage(const Package &pkg);
-	Package deserializePackage(const std::string &data);
+	std::vector<char> serializePackage(const twt::Package &pkg);
+	twt::Package deserializePackage(const std::vector<char> &data);
 
 	struct ServerNotification{
 		int notificationId;
