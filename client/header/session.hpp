@@ -14,7 +14,7 @@ private:
 public:
     Session();
     void sendLogin(const std::string& username);
-    void sendFollow(int followerId, const std::string& username);
+    void sendFollow(const std::string& username);
     void sendMessage(const std::string& messageContent);
     void sendExit();
 };

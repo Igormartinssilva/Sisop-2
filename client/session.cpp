@@ -15,19 +15,20 @@ void Session::sendLogin(const std::string& username) {
     client.sendLogin(username);
 }
 
-void Session::sendFollow(int followerId, const std::string& username) {
-    client.sendFollow(followerId, username);
+void Session::sendFollow(const std::string& username) {
+    if (this->user.getId() == 0)
+        return;
+    client.sendFollow(this->user.getId(), username);
 }
 
 void Session::sendMessage(const std::string& messageContent) {
-    Message msg;
-    msg.userId = user.getId();
-    msg.message = messageContent;
-
-    client.sendMessage(msg.userId, msg.message);
+    if (this->user.getId() == 0)
+        return;
+    client.sendMessage(this->user.getId(), messageContent);
 }
 
 void Session::sendExit() {
-    // Assuming user information is stored in the 'user' member variable
-    client.sendExit(user.getId());
+    if (this->user.getId() == 0)
+        return;
+    client.sendExit(this->user.getId());
 }
