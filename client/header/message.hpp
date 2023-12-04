@@ -11,13 +11,10 @@ using namespace std;
 
 class Message{
     private:
-        int userId;
-        string message;
-        int size;
     public:
+        int size;
+        string message;
+        int userId;
         Message();
         Message(int userId, string message);
-
-        struct twt::Package createMessageBitstream();
-        
 };

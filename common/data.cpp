@@ -10,6 +10,97 @@
 
 namespace twt {
 
+    std::vector<char> serializeMessagePayload(int senderId, const std::string& message) {
+        assert(BUFFER_SIZE >= 8); // Ensure there is enough space for the header and payload
+
+        std::vector<char> serializedData(BUFFER_SIZE);
+
+        // Serialize message payload
+        uint16_t senderIdN = htons(senderId);
+        std::memcpy(serializedData.data() + MAGIC_NUMBER + 0, &senderIdN, sizeof(senderIdN));
+        std::memcpy(serializedData.data() + MAGIC_NUMBER + 2, message.c_str(), message.size());
+
+        return serializedData;
+    }
+
+    std::pair<int, std::string> deserializeMessagePayload(const std::vector<char>& data) {
+        assert(data.size() >= 8); // Ensure there is enough data to deserialize the header and payload
+
+        int senderId;
+        std::memcpy(&senderId, data.data() + MAGIC_NUMBER + 0, sizeof(senderId));
+        senderId = ntohs(senderId);
+
+        std::string message(data.data() + MAGIC_NUMBER + 2, data.size() - (MAGIC_NUMBER + 2));
+
+        return std::make_pair(senderId, message);
+    }
+
+    std::vector<char> serializeFollowPayload(int followerId, const std::string& username) {
+        assert(BUFFER_SIZE >= 8); // Ensure there is enough space for the header and payload
+
+        std::vector<char> serializedData(BUFFER_SIZE);
+
+        // Serialize follow payload
+        uint16_t followerIdN = htons(followerId);
+        std::memcpy(serializedData.data() + MAGIC_NUMBER + 0, &followerIdN, sizeof(followerIdN));
+        std::memcpy(serializedData.data() + MAGIC_NUMBER + 2, username.c_str(), username.size());
+
+        return serializedData;
+    }
+
+    std::pair<int, std::string> deserializeFollowPayload(const std::vector<char>& data) {
+        assert(data.size() >= 8); // Ensure there is enough data to deserialize the header and payload
+
+        int followerId;
+        std::memcpy(&followerId, data.data() + MAGIC_NUMBER + 0, sizeof(followerId));
+        followerId = ntohs(followerId);
+
+        std::string username(data.data() + MAGIC_NUMBER + 2, data.size() - (MAGIC_NUMBER + 2));
+
+        return std::make_pair(followerId, username);
+    }
+
+    std::vector<char> serializeExitPayload(int accountId) {
+        assert(BUFFER_SIZE >= 6); // Ensure there is enough space for the header and payload
+
+        std::vector<char> serializedData(BUFFER_SIZE);
+
+        // Serialize exit payload
+        uint16_t accountIdN = htons(accountId);
+        std::memcpy(serializedData.data() + MAGIC_NUMBER + 0, &accountIdN, sizeof(accountIdN));
+
+        return serializedData;
+    }
+
+    int deserializeExitPayload(const std::vector<char>& data) {
+        assert(data.size() >= 6); // Ensure there is enough data to deserialize the header and payload
+
+        int accountId;
+        std::memcpy(&accountId, data.data() + MAGIC_NUMBER + 0, sizeof(accountId));
+        accountId = ntohs(accountId);
+
+        return accountId;
+    }
+
+    std::vector<char> serializeLoginPayload(const std::string& username) {
+        assert(BUFFER_SIZE >= 2); // Ensure there is enough space for the header
+
+        std::vector<char> serializedData(BUFFER_SIZE);
+
+        // Serialize login payload
+        std::memcpy(serializedData.data() + MAGIC_NUMBER, username.c_str(), username.size());
+
+        return serializedData;
+    }
+
+    std::string deserializeLoginPayload(const std::vector<char>& data) {
+        assert(data.size() >= 2); // Ensure there is enough data to deserialize the header and payload
+
+        std::string username(data.data() + MAGIC_NUMBER, data.size() - MAGIC_NUMBER);
+
+        return username;
+    }
+
     std::vector<char> serializePackage(const Package &pkg) {
         assert(BUFFER_SIZE >= 6); // Ensure there is enough space for the header
 
@@ -98,6 +189,10 @@ twt::UserInfo::UserInfo(int userId, std::string username){
     this->user.username = username;
     this->user.userId = userId;
     this->activeSessions = 0;
+}
+
+int twt::UserInfo::getId(){
+    return this->user.userId;
 }
 
 std::string twt::UserInfo::getUsername(){

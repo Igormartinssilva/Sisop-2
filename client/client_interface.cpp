@@ -10,5 +10,5 @@ int main() {
 
   cout << "Write down a message!" << endl;
   getline(cin, str);
-  session.sendMessage(Message(user.getUserId(), str));
+  session.sendMessage(str);
 }

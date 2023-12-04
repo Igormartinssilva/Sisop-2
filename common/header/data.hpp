@@ -21,12 +21,26 @@ namespace twt{
 		char payload[MSG_SIZE];
 	};
 
-	enum PackageType : uint16_t {
+	enum MessageType : uint16_t {
 		Mensagem = 0,
 		Login,
 		Follow,
 		Exit
 	};
+
+    // Serialization and Deserialization functions for different payloads
+    std::vector<char> serializeMessagePayload(int senderId, const std::string& message);
+    std::pair<int, std::string> deserializeMessagePayload(const std::vector<char>& data);
+
+    std::vector<char> serializeFollowPayload(int followerId, const std::string& username);
+    std::pair<int, std::string> deserializeFollowPayload(const std::vector<char>& data);
+
+    std::vector<char> serializeExitPayload(int accountId);
+    int deserializeExitPayload(const std::vector<char>& data);
+
+    std::vector<char> serializeLoginPayload(const std::string& username);
+    std::string deserializeLoginPayload(const std::vector<char>& data);
+
 
 	std::vector<char> serializePackage(const twt::Package &pkg);
 	twt::Package deserializePackage(const std::vector<char> &data);
@@ -66,6 +80,7 @@ namespace twt{
 			UserInfo();
 			UserInfo(int userId, std::string username);
 			std::string getUsername();
+			int getId();
 			bool maxSessionsReached();
 			void createSession();
 			

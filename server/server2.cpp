@@ -52,7 +52,7 @@ void UDPServer::handleMessages() {
 }
 
 void UDPServer::processMessage() {
-    while (running){
+    while (running) {
         std::lock_guard<std::mutex> lock(mutex);
         if (!processingBuffer.empty()) {
             std::pair<const sockaddr_in&, const std::vector<char>&> bufferValue = processingBuffer.front();
@@ -60,37 +60,41 @@ void UDPServer::processMessage() {
             const sockaddr_in& clientAddress = bufferValue.first;
             std::vector<char> message = bufferValue.second;
             std::string returnMessage("Exit request received");
-            
-            
-            twt::Package pack = twt::deserializePackage(message);
-            switch(pack.type){
-                case twt::Mensagem:
-                    returnMessage = "Message request received";
-                    break;
-                case twt::Follow:
-                    returnMessage = "Follow request received";
-                    break;
-                case twt::Login:
-                    returnMessage = "Login request received";
-                    break;
-                case twt::Exit:
-                    returnMessage = "Exit request received";
-                    break;
-            }
-            std::cout << returnMessage << std::endl;
-            sendto(serverSocket, &returnMessage, returnMessage.length(), 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
 
-            std::cout << "type: " << pack.type << std::endl;
-            std::cout << "timestamp: " << pack.timestamp << std::endl;
-            std::cout << "sequence number: " << pack.sequence_number << std::endl;
-            std::cout << "payload: " << pack.payload << std::endl;
-            
-        }
-        else{
+            twt::Package pack = twt::deserializePackage(message);
+
+            switch (pack.type) {
+                case twt::MessageType::Mensagem: {
+                    auto [senderId, messageContent] = twt::deserializeMessagePayload(message);
+                    returnMessage = "Message request received\nSender ID: " + std::to_string(senderId) + "\nMessage: " + messageContent;
+                    break;
+                }
+                case twt::MessageType::Follow: {
+                    auto [followerId, username] = twt::deserializeFollowPayload(message);
+                    returnMessage = "Follow request received\nFollower ID: " + std::to_string(followerId) + "\nUsername: " + username;
+                    break;
+                }
+                case twt::MessageType::Login: {
+                    std::string username = twt::deserializeLoginPayload(message);
+                    handleLogin(clientAddress, username);
+                    continue;
+                    break;
+                }
+                case twt::MessageType::Exit: {
+                    int accountId = twt::deserializeExitPayload(message);
+                    // Handle exit logic if needed
+                    break;
+                }
+            }
+
+            sendto(serverSocket, returnMessage.c_str(), returnMessage.length(), 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
+
+        } else {
             sleep(0.1);
         }
     }
 }
+
 
 void UDPServer::handleLogin(const sockaddr_in& clientAddress, const std::string& username) {
     std::lock_guard<std::mutex> lock(mutex);
@@ -105,28 +109,6 @@ void UDPServer::handleLogin(const sockaddr_in& clientAddress, const std::string&
         // Enviar resposta de sucesso
         std::string replyMessage = "LOGIN_SUCCESS " + std::to_string(id);
         sendto(serverSocket, replyMessage.c_str(), replyMessage.length(), 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
-    }
-}
-
-void UDPServer::handleReadRequest(const sockaddr_in& clientAddress, const std::string& userIdStr) {
-    //int userId = std::stoi(userIdStr);
-
-    std::lock_guard<std::mutex> lock(mutex);
-
-    // Lógica para recuperar mensagens do buffer para o usuário específico e enviar de volta
-    // ...
-    //std::queue<std::string>& userMessages = messageBuffer;
-    // Exemplo de resposta
-     // Enviar resposta de recebimento ao cliente
-    std::string replyMessage = "Server received your message!";
-    ssize_t sentBytes = sendto(serverSocket, replyMessage.c_str(), replyMessage.length(), 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
-
-    if( sentBytes == -1){
-        perror("ERROR to sending message");
-        //pode-se add outra trativas como encerrar conexao ou tentar reenviar a menssagem.
-    }
-    else{
-        std::cout << "Sent " << sentBytes << " bytes to the client. \n";
     }
 }
 

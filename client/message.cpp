@@ -13,18 +13,3 @@ Message::Message(){
     this->message = "";
     this->size = 0;
 }
-
-struct twt::Package Message::createMessageBitstream(){
-    struct twt::Package package;
-    time_t now = time(0);
-    package.timestamp = 100;
-    if (message.size() < MSG_SIZE){
-        package.type = twt::Mensagem;
-        package.sequence_number = 57; // TODO: adicionar timestamp
-        strcpy(package.payload, message.c_str());
-    }
-    else
-        cerr << "Message greater than buffer size" << endl;
-    return package;
-}
-

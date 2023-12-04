@@ -9,8 +9,12 @@
 class Session {
 private:
     Client client;
+    twt::UserInfo user;
 
 public:
     Session();
-    void sendMessage(Message msg);
+    void sendLogin(const std::string& username);
+    void sendFollow(int followerId, const std::string& username);
+    void sendMessage(const std::string& messageContent);
+    void sendExit();
 };

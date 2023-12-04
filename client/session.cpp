@@ -1,9 +1,9 @@
 #include "header/session.hpp"
 
 Session::Session() : client() {
-    ifstream file("ip.txt"); // TODO: generalize to FILE_IP define directive
+    std::ifstream file("ip.txt"); // TODO: generalize to FILE_IP define directive
     if (file.is_open()) {
-        string buffer;
+        std::string buffer;
         getline(file, buffer);
         client.setServer(buffer.c_str());
     } else {
@@ -11,9 +11,23 @@ Session::Session() : client() {
     }
 }
 
-void Session::sendMessage(Message msg) {
-    struct twt::Package packet = msg.createMessageBitstream();
-    std::vector<char> bitstream = twt::serializePackage(packet);
+void Session::sendLogin(const std::string& username) {
+    client.sendLogin(username);
+}
 
-    client.sendMessage(bitstream);
+void Session::sendFollow(int followerId, const std::string& username) {
+    client.sendFollow(followerId, username);
+}
+
+void Session::sendMessage(const std::string& messageContent) {
+    Message msg;
+    msg.userId = user.getId();
+    msg.message = messageContent;
+
+    client.sendMessage(msg.userId, msg.message);
+}
+
+void Session::sendExit() {
+    // Assuming user information is stored in the 'user' member variable
+    client.sendExit(user.getId());
 }
