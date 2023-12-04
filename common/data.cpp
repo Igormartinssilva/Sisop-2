@@ -5,7 +5,7 @@
 #include "header/data.hpp"
 #include <iostream>
 #include <cassert>
-#define MAGIC_NUMBER 32
+#define MAGIC_NUMBER 0
 #include <cstdint>
 
 namespace twt {
@@ -200,7 +200,7 @@ std::string twt::UserInfo::getUsername(){
 }
 
 bool twt::UserInfo::maxSessionsReached(){
-    return activeSessions <= activeSessions;
+    return activeSessions <= MAX_SESSIONS;
 }
 
 void twt::UserInfo::createSession(){

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "client.hpp"
-#include "user.hpp"
 #include "../../common/header/data.hpp"
 #include "message.hpp"
 #include <fstream>

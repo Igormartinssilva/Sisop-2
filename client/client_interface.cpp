@@ -34,10 +34,10 @@ void printMenu() {
 }
 
 int main() {
-    int userId = 15;
+    string username = "Luis";
     string str;
-    User user(userId);
     Session session = Session();
+    session.sendLogin(username);
 
     int choice;
     while (true) {
@@ -56,7 +56,7 @@ int main() {
             }
             case 2: {
                 string following;
-                cout << "Enter the ID of the user you want to follow: ";
+                cout << "Enter the username of the user you want to follow: ";
                 cin >> following;
                 cin.ignore(); // Consume newline character
                 session.sendFollow(following); // Replace "username" with the actual username

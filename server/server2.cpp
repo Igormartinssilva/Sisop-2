@@ -59,19 +59,19 @@ void UDPServer::processMessage() {
             processingBuffer.pop();
             const sockaddr_in& clientAddress = bufferValue.first;
             std::vector<char> message = bufferValue.second;
-            std::string returnMessage("Exit request received");
+            std::string returnMessage("        Exit request received");
 
             twt::Package pack = twt::deserializePackage(message);
 
             switch (pack.type) {
                 case twt::MessageType::Mensagem: {
                     auto [senderId, messageContent] = twt::deserializeMessagePayload(message);
-                    returnMessage = "Message request received\nSender ID: " + std::to_string(senderId) + "\nMessage: " + messageContent;
+                    returnMessage = "        Message request received\nSender ID: " + std::to_string(senderId) + "\nMessage: " + messageContent;
                     break;
                 }
                 case twt::MessageType::Follow: {
                     auto [followerId, username] = twt::deserializeFollowPayload(message);
-                    returnMessage = "Follow request received\nFollower ID: " + std::to_string(followerId) + "\nUsername: " + username;
+                    returnMessage = "        Follow request received\nFollower ID: " + std::to_string(followerId) + "\nUsername: " + username;
                     break;
                 }
                 case twt::MessageType::Login: {
@@ -87,6 +87,7 @@ void UDPServer::processMessage() {
                 }
             }
 
+            std::cout << returnMessage << std::endl;
             sendto(serverSocket, returnMessage.c_str(), returnMessage.length(), 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
 
         } else {

@@ -2,4 +2,3 @@
 #include "client.hpp"
 #include "message.hpp"
 #include "session.hpp"
-#include "user.hpp"

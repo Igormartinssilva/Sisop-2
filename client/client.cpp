@@ -26,9 +26,9 @@ void Client::setServer(const char *hostname) {
     serv_addr.sin_addr = *((struct in_addr *)server->h_addr);
 }
 
-void Client::sendLogin(const std::string& username) {
+int Client::sendLogin(const std::string& username) {
     std::vector<char> payload = twt::serializeLoginPayload(username);
-    sendPackage(twt::MessageType::Login, payload);
+    return sendPackage(twt::MessageType::Login, payload);
 }
 
 void Client::sendFollow(int followerId, const std::string& username) {
@@ -46,7 +46,7 @@ void Client::sendExit(int accountId) {
     sendPackage(twt::MessageType::Exit, payload);
 }
 
-void Client::sendPackage(twt::MessageType type, const std::vector<char>& payload) {
+int Client::sendPackage(twt::MessageType type, const std::vector<char>& payload) {
     twt::Package package;
     package.type = static_cast<uint16_t>(type);
     package.sequence_number = 0; // You may set a meaningful sequence number here
@@ -71,4 +71,5 @@ void Client::sendPackage(twt::MessageType type, const std::vector<char>& payload
     }
     // Print the acknowledgment
     std::cout << "Got an ack: " << ack.payload << std::endl;
+    return 1;
 }

@@ -20,7 +20,7 @@ public:
     void setServer(const char *hostname);
     
     // New functionalities
-    void sendLogin(const std::string& username);
+    int sendLogin(const std::string& username);
     void sendFollow(int followerId, const std::string& username);
     void sendMessage(int senderId, const std::string& message);
     void sendExit(int accountId);
@@ -30,7 +30,7 @@ private:
     struct sockaddr_in serv_addr;
 
     // Refactored function
-    void sendPackage(twt::MessageType type, const std::vector<char>& payload);
+    int sendPackage(twt::MessageType type, const std::vector<char>& payload);
 };
 
 #endif // CLIENT_HPP

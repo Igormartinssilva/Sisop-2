@@ -12,7 +12,8 @@ Session::Session() : client() {
 }
 
 void Session::sendLogin(const std::string& username) {
-    client.sendLogin(username);
+    int id = 1;//int id = client.sendLogin(username);
+    this->user = twt::UserInfo(id, username);
 }
 
 void Session::sendFollow(const std::string& username) {
