@@ -5,12 +5,12 @@ HEADER_DIR = ../header
 COMMON_DIR = ../common
 
 # Lista de arquivos fonte
-SOURCES = server2.cpp
+SOURCES = server.cpp
 COMMON_SOURCES = $(COMMON_DIR)/data.cpp
 OBJECTS = $(SOURCES:%.cpp=$(BIN_DIR)/%.o) $(COMMON_SOURCES:$(COMMON_DIR)/%.cpp=$(BIN_DIR)/%.o)
 
 # Nome do executável
-EXECUTABLE = $(BIN_DIR)/server2
+EXECUTABLE = $(BIN_DIR)/server
 
 all: $(BIN_DIR) $(HEADER_DIR) $(EXECUTABLE)
 

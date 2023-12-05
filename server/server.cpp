@@ -1,137 +1,135 @@
+#include "header/server.hpp"
+
 #include <iostream>
-#include <cstring>
-#include <cstdlib>
-#include <queue>
-#include <unistd.h>
-#include <arpa/inet.h>
-#include <pthread.h>  // Include the pthread library for thread functions
+#include <sstream>
+#include <string>
 
-#define PORT 4000
-#define BUFFER_SIZE 1024
-#define NAME_SIZE 32
+UDPServer::UDPServer(int port) {
+    serverSocket = socket(AF_INET, SOCK_DGRAM, 0);
 
-struct MessageData {
-    int userId;
-    char text[BUFFER_SIZE];
-    int textSize;
-};
+    sockaddr_in serverAddress;
+    serverAddress.sin_family = AF_INET;
+    serverAddress.sin_addr.s_addr = INADDR_ANY;
+    serverAddress.sin_port = htons(port);
 
-struct UserCreationData {
-    char username[32];
-};
+    bind(serverSocket, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
+}
 
-pthread_t messageThreadId, userCreationThreadId;
-std::queue<MessageData> messageQueue;
-std::queue<UserCreationData> userCreationQueue;
-pthread_mutex_t messageMutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_mutex_t userCreationMutex = PTHREAD_MUTEX_INITIALIZER;
+UDPServer::~UDPServer() {
+    close(serverSocket);
+}
 
-// Thread function for handling regular messages
-void *messageThread(void *arg) {
-    while (true) {
-        pthread_mutex_lock(&messageMutex);
-        if (!messageQueue.empty()) {
-            MessageData data = messageQueue.front();
-            messageQueue.pop();
-            pthread_mutex_unlock(&messageMutex);
+void UDPServer::start() {
+    std::cout << "Server listening on port " << PORT << "...\n";
 
-            // Process regular message data
-            std::cout << "Received regular message from User ID " << data.userId << ": " << data.text << std::endl;
-        } else {
-            pthread_mutex_unlock(&messageMutex);
-            // Sleep or perform other work while waiting for data
-            sleep(1);
+    running = true;
+    std::thread processPacketThread(&UDPServer::handlePackets, this);
+    std::thread processMessageThread(&UDPServer::processPacket, this);
+
+    while (running) {
+        // Processamento adicional pode ser feito aqui
+    }
+
+    processPacketThread.join();
+    processMessageThread.join();
+}
+
+void UDPServer::handlePackets() {
+    while (running) {
+        sockaddr_in clientAddress;
+        socklen_t clientSize = sizeof(clientAddress);
+
+        std::vector<char> buffer(BUFFER_SIZE);
+        memset(buffer.data(), 0, sizeof(buffer));
+
+        int bytesRead = recvfrom(serverSocket, buffer.data(), buffer.size(), 0, (struct sockaddr*)&clientAddress, &clientSize);
+        if (bytesRead > 0) {            
+            std::lock_guard<std::mutex> lock(mutex);
+            processingBuffer.push({clientAddress, buffer});
+
         }
     }
 }
 
-// Thread function for handling user creation data
-void *userCreationThread(void *arg) {
-    while (true) {
-        pthread_mutex_lock(&userCreationMutex);
-        if (!userCreationQueue.empty()) {
-            UserCreationData data = userCreationQueue.front();
-            userCreationQueue.pop();
-            pthread_mutex_unlock(&userCreationMutex);
+void UDPServer::processPacket() {
+    while (running) {
+        std::lock_guard<std::mutex> lock(mutex);
+        if (!processingBuffer.empty()) {
+            std::pair<const sockaddr_in&, const std::vector<char>&> bufferValue = processingBuffer.front();
+            processingBuffer.pop();
+            const sockaddr_in& clientAddress = bufferValue.first;
+            std::vector<char> packet = bufferValue.second;
+            std::string returnMessage("        Exit request received");
 
-            // Process user creation data
-            std::cout << "Received user creation data: Username - " << data.username << std::endl;
+            twt::Packet pack = twt::deserializePacket(packet);
+
+            switch (pack.type) {
+                case twt::PacketType::Mensagem: {
+                    std::pair<int, std::string> payload = twt::deserializePacketPayload(packet);
+                    twt::Message msg;
+                    twt::User user;
+                    user.userId = payload.first;
+                    msg.content = payload.second;
+                    msg.sender = user;
+                    broadcastMessage(msg);
+                    returnMessage = "        Message request received\nSender ID: " + std::to_string(msg.sender.userId) + "\nMessage: " + msg.content;
+                    break;
+                }
+                case twt::PacketType::Follow: {
+                    std::pair<int, std::string> payload = twt::deserializeFollowPayload(packet);
+                    int followerId = payload.first;
+                    std::string username = payload.second;
+                    returnMessage = "        Follow request received\nFollower ID: " + std::to_string(followerId) + "\nUsername: " + username;
+                    break;
+                }
+                case twt::PacketType::Login: {
+                    std::string username = twt::deserializeLoginPayload(packet);
+                    handleLogin(clientAddress, username);
+                    continue;
+                    break;
+                }
+                case twt::PacketType::Exit: {
+                    int accountId = twt::deserializeExitPayload(packet);
+                    // Handle exit logic if needed
+                    break;
+                }
+            }
+
+            std::cout << returnMessage << std::endl;
+            sendto(serverSocket, returnMessage.c_str(), returnMessage.length(), 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
+
         } else {
-            pthread_mutex_unlock(&userCreationMutex);
-            // Sleep or perform other work while waiting for data
-            sleep(1);
+            sleep(0.1);
         }
     }
+}
+
+void UDPServer::handleLogin(const sockaddr_in& clientAddress, const std::string& username) {
+    std::lock_guard<std::mutex> lock(mutex);
+    int id = usersList.createSession(username);
+
+    if (id == -1){
+        // Usuário já está logado, enviar uma resposta
+        std::string replyMessage = "LOGIN_FAIL";
+        sendto(serverSocket, replyMessage.c_str(), replyMessage.length(), 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
+    }
+    else{
+        // Enviar resposta de sucesso
+        std::string replyMessage = "LOGIN_SUCCESS " + std::to_string(id);
+        sendto(serverSocket, replyMessage.c_str(), replyMessage.length(), 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
+    }
+}
+
+void UDPServer::broadcastMessage(const twt::Message& message) {
+    std::lock_guard<std::mutex> lock(mutex);
+    std::cout << "post done" << std::endl;
+    messageBuffer.push(message);
+    cv.notify_all();  // Notifica todos os threads bloqueados na condição
 }
 
 int main() {
-    int sockfd;
-    struct sockaddr_in serv_addr, cli_addr;
-    socklen_t clilen;
-    MessageData receivedMessageData;
-    UserCreationData receivedUserCreationData;
-
-    sockfd = socket(AF_INET, SOCK_DGRAM, 0);
-    if (sockfd == -1) {
-        std::cerr << "Error opening socket" << std::endl;
-        exit(EXIT_FAILURE);
-    }
-
-    memset(&serv_addr, 0, sizeof(serv_addr));
-    serv_addr.sin_family = AF_INET;
-    serv_addr.sin_addr.s_addr = INADDR_ANY;
-    serv_addr.sin_port = htons(PORT);
-
-    if (bind(sockfd, (struct sockaddr *)&serv_addr, sizeof(serv_addr)) == -1) {
-        std::cerr << "Error on binding" << std::endl;
-        close(sockfd);
-        exit(EXIT_FAILURE);
-    }
-
-    std::cout << "Server is listening on port " << PORT << std::endl;
-
-    // Create threads
-    pthread_create(&messageThreadId, nullptr, messageThread, nullptr);
-    pthread_create(&userCreationThreadId, nullptr, userCreationThread, nullptr);
-
-    while (true) {
-        clilen = sizeof(cli_addr);
-
-        // Receive regular message data from the client
-        ssize_t n = recvfrom(sockfd, &receivedMessageData, sizeof(receivedMessageData), 0,
-                              (struct sockaddr *)&cli_addr, &clilen);
-        if (n < 0) {
-            std::cerr << "Error receiving regular message data" << std::endl;
-        }
-
-        // Receive user creation data from the client
-        n = recvfrom(sockfd, &receivedUserCreationData, sizeof(receivedUserCreationData), 0,
-                      (struct sockaddr *)&cli_addr, &clilen);
-        if (n < 0) {
-            std::cerr << "Error receiving user creation data" << std::endl;
-        }
-
-        // Enqueue regular message data
-        pthread_mutex_lock(&messageMutex);
-        messageQueue.push(receivedMessageData);
-        pthread_mutex_unlock(&messageMutex);
-
-        // Enqueue user creation data
-        pthread_mutex_lock(&userCreationMutex);
-        userCreationQueue.push(receivedUserCreationData);
-        pthread_mutex_unlock(&userCreationMutex);
-
-        // Send an acknowledgment back to the client (for both types of data)
-        n = sendto(sockfd, &receivedMessageData, sizeof(receivedMessageData), 0,
-                    (struct sockaddr *)&cli_addr, clilen);
-        if (n < 0) {
-            std::cerr << "Error sending acknowledgment" << std::endl;
-        }
-    }
-
-    // Wait for threads to finish (if needed)
-    pthread_join(messageThreadId, nullptr);
-    pthread_join(userCreationThreadId, nullptr);
+    UDPServer udpServer(PORT);
+    udpServer.start();
 
     return 0;
 }
