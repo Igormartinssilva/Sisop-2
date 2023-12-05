@@ -21,7 +21,8 @@ public:
     void start();
 
 private:
-    void handleMessages();
+    void handlePackets();
+    void processPacket();
     void processMessage();
     void handleLogin(const sockaddr_in& clientAddress, const std::string& username);
     void handleReadRequest(const sockaddr_in& clientAddress, const std::string& username);

@@ -30,7 +30,7 @@ private:
     struct sockaddr_in serv_addr;
 
     // Refactored function
-    int sendPackage(twt::MessageType type, const std::vector<char>& payload);
+    int sendPacket(twt::PacketType type, const std::vector<char>& payload);
 };
 
 #endif // CLIENT_HPP

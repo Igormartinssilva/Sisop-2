@@ -14,14 +14,14 @@
 
 namespace twt{
 
-	struct Package {
+	struct Packet {
 		uint16_t type;
 		uint16_t sequence_number;
 		uint16_t timestamp;
 		char payload[MSG_SIZE];
 	};
 
-	enum MessageType : uint16_t {
+	enum PacketType : uint16_t {
 		Mensagem = 0,
 		Login,
 		Follow,
@@ -29,8 +29,8 @@ namespace twt{
 	};
 
     // Serialization and Deserialization functions for different payloads
-    std::vector<char> serializeMessagePayload(int senderId, const std::string& message);
-    std::pair<int, std::string> deserializeMessagePayload(const std::vector<char>& data);
+    std::vector<char> serializePacketPayload(int senderId, const std::string& message);
+    std::pair<int, std::string> deserializePacketPayload(const std::vector<char>& data);
 
     std::vector<char> serializeFollowPayload(int followerId, const std::string& username);
     std::pair<int, std::string> deserializeFollowPayload(const std::vector<char>& data);
@@ -42,8 +42,8 @@ namespace twt{
     std::string deserializeLoginPayload(const std::vector<char>& data);
 
 
-	std::vector<char> serializePackage(const twt::Package &pkg);
-	twt::Package deserializePackage(const std::vector<char> &data);
+	std::vector<char> serializePacket(const twt::Packet &pkg);
+	twt::Packet deserializePacket(const std::vector<char> &data);
 
 	struct ServerNotification{
 		int notificationId;

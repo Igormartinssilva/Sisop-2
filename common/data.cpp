@@ -10,7 +10,7 @@
 
 namespace twt {
 
-    std::vector<char> serializeMessagePayload(int senderId, const std::string& message) {
+    std::vector<char> serializePacketPayload(int senderId, const std::string& message) {
         assert(BUFFER_SIZE >= 8); // Ensure there is enough space for the header and payload
 
         std::vector<char> serializedData(BUFFER_SIZE);
@@ -23,7 +23,7 @@ namespace twt {
         return serializedData;
     }
 
-    std::pair<int, std::string> deserializeMessagePayload(const std::vector<char>& data) {
+    std::pair<int, std::string> deserializePacketPayload(const std::vector<char>& data) {
         assert(data.size() >= 8); // Ensure there is enough data to deserialize the header and payload
 
         int senderId;
@@ -101,7 +101,7 @@ namespace twt {
         return username;
     }
 
-    std::vector<char> serializePackage(const Package &pkg) {
+    std::vector<char> serializePacket(const Packet &pkg) {
         assert(BUFFER_SIZE >= 6); // Ensure there is enough space for the header
 
         std::vector<char> serializedData(BUFFER_SIZE);
@@ -119,10 +119,10 @@ namespace twt {
         return serializedData;
     }
 
-    Package deserializePackage(const std::vector<char> &data) {
+    Packet deserializePacket(const std::vector<char> &data) {
         assert(data.size() >= 6); // Ensure there is enough data to deserialize the header
 
-        Package pkg;
+        Packet pkg;
 
         std::memcpy(&pkg.type, data.data() + MAGIC_NUMBER + 0, sizeof(pkg.type));
         std::memcpy(&pkg.sequence_number, data.data() + MAGIC_NUMBER + 2, sizeof(pkg.sequence_number));

@@ -28,34 +28,34 @@ void Client::setServer(const char *hostname) {
 
 int Client::sendLogin(const std::string& username) {
     std::vector<char> payload = twt::serializeLoginPayload(username);
-    return sendPackage(twt::MessageType::Login, payload);
+    return sendPacket(twt::PacketType::Login, payload);
 }
 
 void Client::sendFollow(int followerId, const std::string& username) {
     std::vector<char> payload = twt::serializeFollowPayload(followerId, username);
-    sendPackage(twt::MessageType::Follow, payload);
+    sendPacket(twt::PacketType::Follow, payload);
 }
 
 void Client::sendMessage(int senderId, const std::string& message) {
-    std::vector<char> payload = twt::serializeMessagePayload(senderId, message);
-    sendPackage(twt::MessageType::Mensagem, payload);
+    std::vector<char> payload = twt::serializePacketPayload(senderId, message);
+    sendPacket(twt::PacketType::Mensagem, payload);
 }
 
 void Client::sendExit(int accountId) {
     std::vector<char> payload = twt::serializeExitPayload(accountId);
-    sendPackage(twt::MessageType::Exit, payload);
+    sendPacket(twt::PacketType::Exit, payload);
 }
 
-int Client::sendPackage(twt::MessageType type, const std::vector<char>& payload) {
-    twt::Package package;
-    package.type = static_cast<uint16_t>(type);
-    package.sequence_number = 0; // You may set a meaningful sequence number here
-    package.timestamp = 0; // You may set a meaningful timestamp here
-    std::memcpy(package.payload, payload.data(), std::min(sizeof(package.payload), payload.size()));
+int Client::sendPacket(twt::PacketType type, const std::vector<char>& payload) {
+    twt::Packet packet;
+    packet.type = static_cast<uint16_t>(type);
+    packet.sequence_number = 0; // You may set a meaningful sequence number here
+    packet.timestamp = 0; // You may set a meaningful timestamp here
+    std::memcpy(packet.payload, payload.data(), std::min(sizeof(packet.payload), payload.size()));
 
     int n;
     // Send the bitstream to the server
-    n = sendto(sockfd, &package, sizeof(twt::Package), 0,
+    n = sendto(sockfd, &packet, sizeof(twt::Packet), 0,
                (const struct sockaddr *)&serv_addr, sizeof(serv_addr));
 
     if (n < 0) {
@@ -63,8 +63,8 @@ int Client::sendPackage(twt::MessageType type, const std::vector<char>& payload)
         std::cerr << "Error code: " << errno << std::endl;
     }
     // Receive an acknowledgment into a temporary buffer
-    twt::Package ack;
-    n = recvfrom(sockfd, &ack, sizeof(twt::Package), 0, nullptr, nullptr);
+    twt::Packet ack;
+    n = recvfrom(sockfd, &ack, sizeof(twt::Packet), 0, nullptr, nullptr);
     if (n < 0) {
         perror("ERROR recvfrom");
         std::cerr << "Error code: " << errno << std::endl;

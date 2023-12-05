@@ -4,12 +4,12 @@
 int main() {
     // Test the data structures and classes defined in the header file
 
-    // Create a Package
-    twt::Package package;
-    package.type = twt::PackageType::Mensagem;
-    package.sequence_number = 1;
-    package.timestamp = 12345;
-    package.payload = "Hello, world!";
+    // Create a Packet
+    twt::Packet packet;
+    packet.type = twt::PacketType::Mensagem;
+    packet.sequence_number = 1;
+    packet.timestamp = 12345;
+    packet.payload = "Hello, world!";
 
     // Create a User
     twt::User user;
@@ -29,7 +29,7 @@ int main() {
     int sessionId = usersList.createSession("Alice");
 
     // Display some information for testing purposes
-    std::cout << "Package Payload: " << package.payload << std::endl;
+    std::cout << "Packet Payload: " << packet.payload << std::endl;
     std::cout << "User ID: " << user.userId << ", Username: " << user.username << std::endl;
     std::cout << "User Info Username: " << userInfo.getUsername() << std::endl;
     std::cout << "Followers of user 1: " << followers.getFollowers(1).size() << std::endl;
