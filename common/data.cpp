@@ -5,32 +5,34 @@
 #include "header/data.hpp"
 #include <iostream>
 #include <cassert>
-#define MAGIC_NUMBER 0
+#define MAGIC_NUMBER 32
 #include <cstdint>
 
 namespace twt {
 
-    std::vector<char> serializePacketPayload(int senderId, const std::string& message) {
+    std::vector<char> serializeMessagePayload(int senderId, const std::string& message) {
         assert(BUFFER_SIZE >= 8); // Ensure there is enough space for the header and payload
 
-        std::vector<char> serializedData(BUFFER_SIZE);
+        std::vector<char> serializedData(BUFFER_SIZE, 0);
 
         // Serialize message payload
         uint16_t senderIdN = htons(senderId);
-        std::memcpy(serializedData.data() + MAGIC_NUMBER + 0, &senderIdN, sizeof(senderIdN));
-        std::memcpy(serializedData.data() + MAGIC_NUMBER + 2, message.c_str(), message.size());
+        std::memcpy(serializedData.data() + 0, &senderIdN, sizeof(senderIdN));
+        std::memcpy(serializedData.data() + 2, message.c_str(), message.size());
 
         return serializedData;
     }
 
-    std::pair<int, std::string> deserializePacketPayload(const std::vector<char>& data) {
+    std::pair<int, std::string> deserializeMessagePayload(const std::vector<char>& data) {
         assert(data.size() >= 8); // Ensure there is enough data to deserialize the header and payload
 
+        Packet packet = deserializePacket(data);
+
         int senderId;
-        std::memcpy(&senderId, data.data() + MAGIC_NUMBER + 0, sizeof(senderId));
+        std::memcpy(&senderId, packet.payload, sizeof(senderId));
         senderId = ntohs(senderId);
 
-        std::string message(data.data() + MAGIC_NUMBER + 2, data.size() - (MAGIC_NUMBER + 2));
+        std::string message(packet.payload + 2, sizeof(packet.payload) - 2);
 
         return std::make_pair(senderId, message);
     }
@@ -42,8 +44,8 @@ namespace twt {
 
         // Serialize follow payload
         uint16_t followerIdN = htons(followerId);
-        std::memcpy(serializedData.data() + MAGIC_NUMBER + 0, &followerIdN, sizeof(followerIdN));
-        std::memcpy(serializedData.data() + MAGIC_NUMBER + 2, username.c_str(), username.size());
+        std::memcpy(serializedData.data() + 0, &followerIdN, sizeof(followerIdN));
+        std::memcpy(serializedData.data() + 2, username.c_str(), username.size());
 
         return serializedData;
     }
@@ -51,11 +53,13 @@ namespace twt {
     std::pair<int, std::string> deserializeFollowPayload(const std::vector<char>& data) {
         assert(data.size() >= 8); // Ensure there is enough data to deserialize the header and payload
 
+        Packet packet = deserializePacket(data);
+
         int followerId;
-        std::memcpy(&followerId, data.data() + MAGIC_NUMBER + 0, sizeof(followerId));
+        std::memcpy(&followerId, packet.payload, sizeof(followerId));
         followerId = ntohs(followerId);
 
-        std::string username(data.data() + MAGIC_NUMBER + 2, data.size() - (MAGIC_NUMBER + 2));
+        std::string username(packet.payload + 2, sizeof(packet.payload - 2));
 
         return std::make_pair(followerId, username);
     }
@@ -67,7 +71,7 @@ namespace twt {
 
         // Serialize exit payload
         uint16_t accountIdN = htons(accountId);
-        std::memcpy(serializedData.data() + MAGIC_NUMBER + 0, &accountIdN, sizeof(accountIdN));
+        std::memcpy(serializedData.data(), &accountIdN, sizeof(accountIdN));
 
         return serializedData;
     }
@@ -75,8 +79,10 @@ namespace twt {
     int deserializeExitPayload(const std::vector<char>& data) {
         assert(data.size() >= 6); // Ensure there is enough data to deserialize the header and payload
 
+        Packet packet = deserializePacket(data);
+
         int accountId;
-        std::memcpy(&accountId, data.data() + MAGIC_NUMBER + 0, sizeof(accountId));
+        std::memcpy(&accountId, packet.payload, sizeof(accountId));
         accountId = ntohs(accountId);
 
         return accountId;
@@ -88,15 +94,16 @@ namespace twt {
         std::vector<char> serializedData(BUFFER_SIZE);
 
         // Serialize login payload
-        std::memcpy(serializedData.data() + MAGIC_NUMBER, username.c_str(), username.size());
+        std::memcpy(serializedData.data(), username.c_str(), username.size());
 
         return serializedData;
     }
 
     std::string deserializeLoginPayload(const std::vector<char>& data) {
         assert(data.size() >= 2); // Ensure there is enough data to deserialize the header and payload
+        Packet packet = deserializePacket(data);
 
-        std::string username(data.data() + MAGIC_NUMBER, data.size() - MAGIC_NUMBER);
+        std::string username(packet.payload);
 
         return username;
     }
@@ -104,17 +111,18 @@ namespace twt {
     std::vector<char> serializePacket(const Packet &pkg) {
         assert(BUFFER_SIZE >= 6); // Ensure there is enough space for the header
 
-        std::vector<char> serializedData(BUFFER_SIZE);
+        std::vector<char> serializedData(BUFFER_SIZE, 0);
 
         // Convert to network byte order (big-endian)
         uint16_t typeN = htons(pkg.type);
         uint16_t seqNumN = htons(pkg.sequence_number);
         uint16_t timestampN = htons(pkg.timestamp);
 
-        std::memcpy(serializedData.data(), &typeN, sizeof(typeN));
-        std::memcpy(serializedData.data() + 2, &seqNumN, sizeof(seqNumN));
-        std::memcpy(serializedData.data() + 4, &timestampN, sizeof(timestampN));
-        std::memcpy(serializedData.data() + 6, pkg.payload, BUFFER_SIZE - 6);
+        int index = 0;
+        std::memcpy(serializedData.data() + index, &typeN, sizeof(typeN)); index += sizeof(typeN);
+        std::memcpy(serializedData.data() + index, &seqNumN, sizeof(seqNumN)); index += sizeof(seqNumN);
+        std::memcpy(serializedData.data() + index, &timestampN, sizeof(timestampN)); index += sizeof(timestampN);
+        std::memcpy(serializedData.data() + index, pkg.payload, sizeof(pkg.payload));
 
         return serializedData;
     }
@@ -133,8 +141,10 @@ namespace twt {
         //pkg.sequence_number = ntohs(pkg.sequence_number);
         //pkg.timestamp = ntohs(pkg.timestamp);
 
-        size_t payloadSize = std::min(data.size() - 6, sizeof(pkg.payload));
-        std::memcpy(pkg.payload, data.data() + MAGIC_NUMBER + 6, payloadSize);
+        std::memcpy(pkg.payload, data.data() + MAGIC_NUMBER + 6, BUFFER_SIZE - (MAGIC_NUMBER + 6));
+        for (int i = 0; i < MAGIC_NUMBER; i ++){
+            pkg.payload[BUFFER_SIZE - MAGIC_NUMBER - 6 + i] = 0;
+        }
 
         return pkg;
     }

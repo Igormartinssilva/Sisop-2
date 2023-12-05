@@ -38,6 +38,7 @@ int main() {
     string str;
     Session session = Session();
     session.sendLogin(username);
+    pressEnterToContinue();
 
     int choice;
     while (true) {

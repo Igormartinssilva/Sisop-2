@@ -1,5 +1,7 @@
 #ifndef SERVER
 #define SERVER
+#define SERVER_RECV_DEBUG false
+
 #include <iostream>
 #include <vector>
 #include <unistd.h>

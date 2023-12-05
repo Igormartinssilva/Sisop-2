@@ -37,7 +37,7 @@ void Client::sendFollow(int followerId, const std::string& username) {
 }
 
 void Client::sendMessage(int senderId, const std::string& message) {
-    std::vector<char> payload = twt::serializePacketPayload(senderId, message);
+    std::vector<char> payload = twt::serializeMessagePayload(senderId, message);
     sendPacket(twt::PacketType::Mensagem, payload);
 }
 
@@ -49,13 +49,19 @@ void Client::sendExit(int accountId) {
 int Client::sendPacket(twt::PacketType type, const std::vector<char>& payload) {
     twt::Packet packet;
     packet.type = static_cast<uint16_t>(type);
-    packet.sequence_number = 0; // You may set a meaningful sequence number here
-    packet.timestamp = 0; // You may set a meaningful timestamp here
+    packet.sequence_number = 250; // You may set a meaningful sequence number here
+    packet.timestamp = 150; // You may set a meaningful timestamp here
     std::memcpy(packet.payload, payload.data(), std::min(sizeof(packet.payload), payload.size()));
+    std::vector<char> bitstream = twt::serializePacket(packet);
+
+    /*for (char ch : bitstream)
+        std::cout << int(ch) << " ";
+    std::cout << std::endl;*/
 
     int n;
+
     // Send the bitstream to the server
-    n = sendto(sockfd, &packet, sizeof(twt::Packet), 0,
+    n = sendto(sockfd, &bitstream, bitstream.size(), 0,
                (const struct sockaddr *)&serv_addr, sizeof(serv_addr));
 
     if (n < 0) {

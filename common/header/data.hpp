@@ -29,8 +29,8 @@ namespace twt{
 	};
 
     // Serialization and Deserialization functions for different payloads
-    std::vector<char> serializePacketPayload(int senderId, const std::string& message);
-    std::pair<int, std::string> deserializePacketPayload(const std::vector<char>& data);
+    std::vector<char> serializeMessagePayload(int senderId, const std::string& message);
+    std::pair<int, std::string> deserializeMessagePayload(const std::vector<char>& data);
 
     std::vector<char> serializeFollowPayload(int followerId, const std::string& username);
     std::pair<int, std::string> deserializeFollowPayload(const std::vector<char>& data);

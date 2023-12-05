@@ -12,7 +12,7 @@ Session::Session() : client() {
 }
 
 void Session::sendLogin(const std::string& username) {
-    int id = 1;//int id = client.sendLogin(username);
+    int id = client.sendLogin(username);
     this->user = twt::UserInfo(id, username);
 }
 
