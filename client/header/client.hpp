@@ -2,6 +2,7 @@
 
 #ifndef CLIENT_HPP
 #define CLIENT_HPP
+#define DEBUG_CLIENT true
 
 #include "../../asserts/constraints.hpp"
 #include <iostream>

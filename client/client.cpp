@@ -54,14 +54,21 @@ int Client::sendPacket(twt::PacketType type, const std::vector<char>& payload) {
     std::memcpy(packet.payload, payload.data(), std::min(sizeof(packet.payload), payload.size()));
     std::vector<char> bitstream = twt::serializePacket(packet);
 
-    /*for (char ch : bitstream)
-        std::cout << int(ch) << " ";
-    std::cout << std::endl;*/
+    char bits[BUFFER_SIZE];
+    for (int i = 0; i < BUFFER_SIZE; i ++)
+        bits[i] = bitstream[i];
+    
+
+    if (DEBUG_CLIENT){
+        for (char ch : bitstream)
+            std::cout << int(ch) << " ";
+        std::cout << std::endl;
+    }
 
     int n;
 
     // Send the bitstream to the server
-    n = sendto(sockfd, &bitstream, bitstream.size(), 0,
+    n = sendto(sockfd, &bits, BUFFER_SIZE, 0,
                (const struct sockaddr *)&serv_addr, sizeof(serv_addr));
 
     if (n < 0) {

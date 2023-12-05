@@ -51,7 +51,7 @@ void UDPServer::handlePackets() {
                     std::cout << int(ch) << " ";
                 std::cout << std::endl;
                 twt::Packet pack = twt::deserializePacket(buffer);
-
+ 
                 std::cout << "Type:" << pack.type << std::endl;
                 std::cout << "Time:" << pack.timestamp << std::endl;
                 std::cout << "SeqN:" << pack.sequence_number << std::endl;
@@ -75,7 +75,7 @@ void UDPServer::processPacket() {
             processingBuffer.pop();
             const sockaddr_in& clientAddress = bufferValue.first;
             std::vector<char> packet = bufferValue.second;
-            std::string returnMessage("        Exit request received");
+            std::string returnMessage("unknown type");
 
             twt::Packet pack = twt::deserializePacket(packet);
 
@@ -89,32 +89,33 @@ void UDPServer::processPacket() {
                     msg.content = payload.second;
                     msg.sender = user;
                     //broadcastMessage(msg);
-                    returnMessage = "        Message request received\nSender ID: " + std::to_string(msg.sender.userId) + "\nMessage: " + msg.content + "\n";
+                    returnMessage = "Message request received\nSender ID: " + std::to_string(msg.sender.userId) + "\nMessage: " + msg.content + "\n";
                     break;
                 }
                 case twt::PacketType::Follow: {
                     std::pair<int, std::string> payload = twt::deserializeFollowPayload(packet);
                     int followerId = payload.first;
                     std::string username = payload.second;
-                    returnMessage = "        Follow request received\nFollower ID: " + std::to_string(followerId) + "\nUsername: " + username + "\n";
+                    returnMessage = "Follow request received\nFollower ID: " + std::to_string(followerId) + "\nUsername: " + username + "\n";
                     break;
                 }
                 case twt::PacketType::Login: {
                     std::string username = twt::deserializeLoginPayload(packet);
                     //handleLogin(clientAddress, username);
-                    returnMessage = "        Login request received\nusername: " + username + "\n";
+                    returnMessage = "Login request received\nusername: " + username + "\n";
                     break;
                 }
                 case twt::PacketType::Exit: {
                     int accountId = twt::deserializeExitPayload(packet);
-                    returnMessage = "        Exit request received\nUserId: " + std::to_string(accountId) + "\n";
+                    returnMessage = "Exit request received\nUserId: " + std::to_string(accountId) + "\n";
                     // Handle exit logic if needed
                     break;
                 }
             }
-
+            char str[BUFFER_SIZE];
+            memcpy(str, returnMessage.data(), returnMessage.length());
             std::cout << returnMessage << std::endl;
-            sendto(serverSocket, returnMessage.c_str(), returnMessage.length(), 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
+            sendto(serverSocket, str, BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
 
         } else {
             sleep(0.1);

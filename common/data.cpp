@@ -5,7 +5,7 @@
 #include "header/data.hpp"
 #include <iostream>
 #include <cassert>
-#define MAGIC_NUMBER 32
+#define MAGIC_NUMBER 0
 #include <cstdint>
 
 namespace twt {
@@ -137,9 +137,9 @@ namespace twt {
         std::memcpy(&pkg.timestamp, data.data() + MAGIC_NUMBER + 4, sizeof(pkg.timestamp));
 
         // Convert back to host byte order
-        //pkg.type = ntohs(pkg.type);
-        //pkg.sequence_number = ntohs(pkg.sequence_number);
-        //pkg.timestamp = ntohs(pkg.timestamp);
+        pkg.type = ntohs(pkg.type);
+        pkg.sequence_number = ntohs(pkg.sequence_number);
+        pkg.timestamp = ntohs(pkg.timestamp);
 
         std::memcpy(pkg.payload, data.data() + MAGIC_NUMBER + 6, BUFFER_SIZE - (MAGIC_NUMBER + 6));
         for (int i = 0; i < MAGIC_NUMBER; i ++){
