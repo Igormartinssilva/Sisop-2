@@ -45,7 +45,6 @@ void UDPServer::handlePackets() {
         int bytesRead = recvfrom(serverSocket, buffer.data(), buffer.size(), 0, (struct sockaddr*)&clientAddress, &clientSize);
         if (bytesRead > 0) {            
             std::lock_guard<std::mutex> lock(mutex);
-            
             if(SERVER_RECV_DEBUG){
                 for (char ch : buffer)
                     std::cout << int(ch) << " ";
@@ -71,11 +70,11 @@ void UDPServer::processPacket() {
     while (running) {
         std::lock_guard<std::mutex> lock(mutex);
         if (!processingBuffer.empty()) {
+            std::string returnMessage("unknown type");
             std::pair<const sockaddr_in&, const std::vector<char>&> bufferValue = processingBuffer.front();
-            processingBuffer.pop();
             const sockaddr_in& clientAddress = bufferValue.first;
             std::vector<char> packet = bufferValue.second;
-            std::string returnMessage("unknown type");
+            processingBuffer.pop();
 
             twt::Packet pack = twt::deserializePacket(packet);
 
@@ -112,10 +111,11 @@ void UDPServer::processPacket() {
                     break;
                 }
             }
-            char str[BUFFER_SIZE];
-            memcpy(str, returnMessage.data(), returnMessage.length());
+            char bits[BUFFER_SIZE];
+            for (int i = 0; i < BUFFER_SIZE; i ++)
+                bits[i] = returnMessage[i];
             std::cout << returnMessage << std::endl;
-            sendto(serverSocket, str, BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
+            sendto(serverSocket, bits, BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
 
         } else {
             sleep(0.1);

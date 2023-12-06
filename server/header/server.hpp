@@ -1,6 +1,6 @@
 #ifndef SERVER
 #define SERVER
-#define SERVER_RECV_DEBUG true
+#define SERVER_RECV_DEBUG false
 
 #include <iostream>
 #include <vector>

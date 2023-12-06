@@ -119,9 +119,9 @@ namespace twt {
         uint16_t timestampN = htons(pkg.timestamp);
 
         int index = 0;
-        std::memcpy(serializedData.data() + index, &typeN, sizeof(typeN)); index += sizeof(typeN);
-        std::memcpy(serializedData.data() + index, &seqNumN, sizeof(seqNumN)); index += sizeof(seqNumN);
-        std::memcpy(serializedData.data() + index, &timestampN, sizeof(timestampN)); index += sizeof(timestampN);
+        std::memcpy(serializedData.data() + index, &typeN,      sizeof(typeN));         index += sizeof(typeN);
+        std::memcpy(serializedData.data() + index, &seqNumN,    sizeof(seqNumN));       index += sizeof(seqNumN);
+        std::memcpy(serializedData.data() + index, &timestampN, sizeof(timestampN));    index += sizeof(timestampN);
         std::memcpy(serializedData.data() + index, pkg.payload, sizeof(pkg.payload));
 
         return serializedData;
@@ -132,19 +132,17 @@ namespace twt {
 
         Packet pkg;
 
-        std::memcpy(&pkg.type, data.data() + MAGIC_NUMBER + 0, sizeof(pkg.type));
-        std::memcpy(&pkg.sequence_number, data.data() + MAGIC_NUMBER + 2, sizeof(pkg.sequence_number));
-        std::memcpy(&pkg.timestamp, data.data() + MAGIC_NUMBER + 4, sizeof(pkg.timestamp));
+        int index = 0;
+        std::memcpy(&pkg.type,              data.data() + index, sizeof(pkg.type));             index += sizeof(pkg.type);
+        std::memcpy(&pkg.sequence_number,   data.data() + index, sizeof(pkg.sequence_number));  index += sizeof(pkg.sequence_number);
+        std::memcpy(&pkg.timestamp,         data.data() + index, sizeof(pkg.timestamp));        index += sizeof(pkg.timestamp);
 
         // Convert back to host byte order
         pkg.type = ntohs(pkg.type);
         pkg.sequence_number = ntohs(pkg.sequence_number);
         pkg.timestamp = ntohs(pkg.timestamp);
 
-        std::memcpy(pkg.payload, data.data() + MAGIC_NUMBER + 6, BUFFER_SIZE - (MAGIC_NUMBER + 6));
-        for (int i = 0; i < MAGIC_NUMBER; i ++){
-            pkg.payload[BUFFER_SIZE - MAGIC_NUMBER - 6 + i] = 0;
-        }
+        std::memcpy(pkg.payload,            data.data() + index, sizeof(pkg.payload));
 
         return pkg;
     }
