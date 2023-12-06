@@ -5,7 +5,7 @@ HEADER_DIR = ../header
 COMMON_DIR = ../common
 
 # Lista de arquivos fonte
-SOURCES = client.cpp client_interface.cpp message.cpp session.cpp user.cpp 
+SOURCES = client.cpp client_interface.cpp message.cpp session.cpp
 COMMON_SOURCES = $(COMMON_DIR)/data.cpp
 OBJECTS = $(SOURCES:%.cpp=$(BIN_DIR)/%.o) $(COMMON_SOURCES:$(COMMON_DIR)/%.cpp=$(BIN_DIR)/%.o)
 
