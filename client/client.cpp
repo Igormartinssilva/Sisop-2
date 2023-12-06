@@ -76,13 +76,13 @@ int Client::sendPacket(twt::PacketType type, const std::vector<char>& payload) {
         std::cerr << "Error code: " << errno << std::endl;
     }
     // Receive an acknowledgment into a temporary buffer
-    twt::Packet ack;
-    n = recvfrom(sockfd, &ack, sizeof(twt::Packet), 0, nullptr, nullptr);
+    char ack[BUFFER_SIZE];
+    n = recvfrom(sockfd, &ack, BUFFER_SIZE, 0, nullptr, nullptr);
     if (n < 0) {
         perror("ERROR recvfrom");
         std::cerr << "Error code: " << errno << std::endl;
     }
     // Print the acknowledgment
-    std::cout << "Got an ack: " << ack.payload << std::endl;
+    std::cout << "Got an ack: " << ack << std::endl;
     return 1;
 }

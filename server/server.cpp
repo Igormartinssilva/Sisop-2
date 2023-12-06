@@ -111,10 +111,11 @@ void UDPServer::processPacket() {
                     break;
                 }
             }
-            char bits[BUFFER_SIZE];
-            for (int i = 0; i < BUFFER_SIZE; i ++)
+            char bits[BUFFER_SIZE] = {0};
+            for (int i = 0; i < (int)returnMessage.size(); i ++)
                 bits[i] = returnMessage[i];
             std::cout << returnMessage << std::endl;
+
             sendto(serverSocket, bits, BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
 
         } else {
