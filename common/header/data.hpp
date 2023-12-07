@@ -92,8 +92,8 @@ namespace twt{
 			int nextId = 1;
 			std::unordered_map<int, UserInfo> users;
 			std::unordered_map<std::string, int> usersId;
-			int getUserId(std::string username);
 		public:
+			int getUserId(std::string username);
 			void appendUser(std::string username);
 			void removeUser(int userId);
 			int createSession(std::string username);

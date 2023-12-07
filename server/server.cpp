@@ -84,7 +84,6 @@ void UDPServer::processPacket() {
                 case twt::PacketType::Mensagem: {
                     std::pair<int, std::string> payload = twt::deserializeMessagePayload(packet);
                     messageBuffer.push({{"", payload.first}, payload.second});
-                    //handleMessage(clientAddress, payload.first, payload.second);
                     returnMessage = "Message request received\nSender ID: " + std::to_string(payload.first) + "\nMessage: " + payload.second + "\n";
                     break;
                 }
@@ -92,6 +91,7 @@ void UDPServer::processPacket() {
                     std::pair<int, std::string> payload = twt::deserializeFollowPayload(packet);
                     int followerId = payload.first;
                     std::string username = payload.second;
+                    followers.follow(followerId, usersList.getUserId(username));
                     returnMessage = "Follow request received\nFollower ID: " + std::to_string(followerId) + "\nUsername: " + username + "\n";
                     break;
                 }
@@ -165,23 +165,32 @@ void UDPServer::processMessages(){
         std::lock_guard<std::mutex> lock(mutex);
         if (!messageBuffer.empty()){
             twt::Message msg = messageBuffer.front();
+            std::cout << msg.sender.userId << std::endl;
             std::unordered_set<int> userFollowers = this->followers.getFollowers(msg.sender.userId);
+            std::cout << "Lista de followers de " << msg.sender.userId << " " << msg.sender.username << " ";
+            for (auto i : userFollowers) std::cout << i << ", ";
+            std::cout << std::endl;
             for (auto f : userFollowers){
+                std::cout << "entrou na lista de followers" << msg.content << std::endl;
                 userMessageBuffer[f].push(msg);
                 if (!connectedUsers[f].empty()){
                     broadcastMessage(f);
                 }
             }
             messageBuffer.pop();
+        } else {
+            sleep(0.1);
         }
     }
 }
 
 void UDPServer::broadcastMessage(int receiverId) {
     std::lock_guard<std::mutex> lock(mutex);
+    std::cout << "Chegou (diferente do santos)" << receiverId << std::endl;
     while (!userMessageBuffer[receiverId].empty()){ 
         twt::Message message = userMessageBuffer[receiverId].front();
         for (const sockaddr_in& userAddr : connectedUsers[receiverId]){
+            std::cout << "Sending message: " << message.content.c_str() << " to user " << std::to_string(receiverId) << "from user " << message.sender.username << " (id " << message.sender.userId << ")" << std::endl;
             sendto(serverSocket, message.content.c_str(), message.content.length(), 0, (struct sockaddr*)&userAddr, sizeof(userAddr));
         }
         userMessageBuffer[receiverId].pop();

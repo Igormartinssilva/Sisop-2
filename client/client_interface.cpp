@@ -34,7 +34,7 @@ void printMenu() {
 }
 
 int main() {
-    string username = "Luis";
+    string username = "Bolson";
     string str;
     Session session = Session();
     session.sendLogin(username);

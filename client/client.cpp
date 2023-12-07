@@ -1,6 +1,7 @@
 #include "header/client.hpp"
 
 Client::Client() {
+    srand(time(NULL));
     sockfd = socket(AF_INET, SOCK_DGRAM, 0);
     if (sockfd == -1) {
         std::cerr << "Error opening socket" << std::endl;
@@ -84,5 +85,5 @@ int Client::sendPacket(twt::PacketType type, const std::vector<char>& payload) {
     }
     // Print the acknowledgment
     std::cout << "Got an ack: " << ack << std::endl;
-    return 1;
+    return rand();
 }

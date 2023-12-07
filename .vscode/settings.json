@@ -98,6 +98,11 @@
         "typeindex": "cpp",
         "valarray": "cpp",
         "variant": "cpp",
-        "*.ipp": "cpp"
+        "*.ipp": "cpp",
+        "expected": "cpp",
+        "format": "cpp",
+        "spanstream": "cpp",
+        "stacktrace": "cpp",
+        "stdfloat": "cpp"
     }
 }
