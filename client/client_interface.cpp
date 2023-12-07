@@ -38,6 +38,9 @@ int main() {
     string str;
     Session session = Session();
     session.sendLogin(username);
+    std::thread processingThread(&Session::processBuffer, session);
+    std::thread receivingThread(&Session::processReceiving, session);
+
     pressEnterToContinue();
 
     int choice;
@@ -75,4 +78,6 @@ int main() {
                 pressEnterToContinue();
         }
     }
+    processingThread.join();
+    receivingThread.join();
 }

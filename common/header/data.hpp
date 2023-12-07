@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <queue>
+#include <cstdint>
 #include <sstream>
 #include "../../asserts/constraints.hpp"
 
