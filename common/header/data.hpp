@@ -71,7 +71,7 @@ namespace twt{
 		public:
 			void follow(int followerId, int followingId);
 			std::unordered_set<int> getFollowers(int userId);
-			bool twt::Followers::isFollowing(int followerId, int followingId);
+			bool isFollowing(int followerId, int followingId);
 			
 	};
 

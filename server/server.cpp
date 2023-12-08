@@ -90,16 +90,6 @@ void UDPServer::processPacket() {
                 case twt::PacketType::Follow: {
                     std::pair<int, std::string> payload = twt::deserializeFollowPayload(packet);
                     int followerId = payload.first;
-                    std::string username = payload.second;
-                   // followers.follow(followerId, usersList.getUserId(username));
-                    returnMessage = "Follow request received\nFollower ID: " + std::to_string(followerId) + "\nUsername: " + username + "\n";
-                    
-                    std::pair<int, std::string> payload = twt::deserializeFollowPayload(packet);
-                    int followerId = payload.first;
-                    std::string usernameToFollow = payload.second;
-
-                     std::pair<int, std::string> payload = twt::deserializeFollowPayload(packet);
-                    int followerId = payload.first;
                     std::string usernameToFollow = payload.second;
 
    //codigo do igor para follow                 // Check if the username exists and get its ID
