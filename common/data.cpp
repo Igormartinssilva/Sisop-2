@@ -157,6 +157,16 @@ std::unordered_set<int> twt::Followers::getFollowers(int userId){
     return this->followers[userId];
 }
 
+  bool twt::Followers::isFollowing(int followerId, int followingId) {
+        auto it = followers.find(followingId);
+        if (it != followers.end()) {
+            return it->second.find(followerId) != it->second.end();
+        }
+        return false;
+    }
+
+   
+
 void twt::UsersList::appendUser(std::string username){
     users.insert({nextId, UserInfo(nextId, username)});
     usersId.insert({username, nextId});

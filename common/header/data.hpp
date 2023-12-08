@@ -71,6 +71,8 @@ namespace twt{
 		public:
 			void follow(int followerId, int followingId);
 			std::unordered_set<int> getFollowers(int userId);
+			bool twt::Followers::isFollowing(int followerId, int followingId);
+			
 	};
 
 	class UserInfo {
@@ -97,6 +99,7 @@ namespace twt{
 			void appendUser(std::string username);
 			void removeUser(int userId);
 			int createSession(std::string username);
+			
 	};
 
 	struct Message {

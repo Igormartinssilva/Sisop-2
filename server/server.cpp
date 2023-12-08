@@ -91,8 +91,38 @@ void UDPServer::processPacket() {
                     std::pair<int, std::string> payload = twt::deserializeFollowPayload(packet);
                     int followerId = payload.first;
                     std::string username = payload.second;
-                    followers.follow(followerId, usersList.getUserId(username));
+                   // followers.follow(followerId, usersList.getUserId(username));
                     returnMessage = "Follow request received\nFollower ID: " + std::to_string(followerId) + "\nUsername: " + username + "\n";
+                    
+                    std::pair<int, std::string> payload = twt::deserializeFollowPayload(packet);
+                    int followerId = payload.first;
+                    std::string usernameToFollow = payload.second;
+
+                     std::pair<int, std::string> payload = twt::deserializeFollowPayload(packet);
+                    int followerId = payload.first;
+                    std::string usernameToFollow = payload.second;
+
+   //codigo do igor para follow                 // Check if the username exists and get its ID
+                    int followeeId = usersList.getUserId(usernameToFollow);
+                    if (followeeId != -1) {
+                        // Check if the follower is not already following the user
+                        if (!followers.isFollowing(followerId, followeeId)) {
+                            // Perform the follow operation
+                            followers.follow(followerId, followeeId);
+
+                            // Return a success message
+                            returnMessage = "Follow request received\nFollower ID: " + std::to_string(followerId) +
+                                            "\nUsername: " + usernameToFollow + "\nFollow successful\n";
+                        } else {
+                            // Return a message indicating that the follower is already following the user
+                            returnMessage = "Follow request received\nFollower ID: " + std::to_string(followerId) +
+                                            "\nUsername: " + usernameToFollow + "\nAlready following\n";
+                        }
+                    } else {
+                        // Return a message indicating that the username does not exist
+                        returnMessage = "Follow request received\nFollower ID: " + std::to_string(followerId) +
+                                        "\nUsername: " + usernameToFollow + "\nUser not found\n";
+                    }
                     break;
                 }
                 case twt::PacketType::Login: {
