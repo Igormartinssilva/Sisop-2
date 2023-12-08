@@ -10,13 +10,22 @@ Session::Session() : client() {
         std::cout << "ip found in file, ip: " << buffer << std::endl;
         client.setServer(buffer.c_str());
     } else {
-        client.setServer("143.54.50.86"); //143.54.50.200 (dick) 143.54.48.125(luis) 172.25.219.12(igor)
+        client.setServer("143.54.48.125"); //143.54.50.200 (dick) 143.54.48.125(luis) 172.25.219.12(igor)
     }
+}
+
+bool Session::isLogged(){
+    return this->logged;
 }
 
 void Session::sendLogin(const std::string& username) {
     int id = client.sendLogin(username);
-    this->user = twt::UserInfo(id, username);
+    if (id != -1){
+        this->user = twt::UserInfo(id, username);
+        this->logged = true;    
+    }
+    else
+        this->logged = false;
 }
 
 void Session::sendFollow(const std::string& username) {

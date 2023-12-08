@@ -165,12 +165,16 @@ std::unordered_set<int> twt::Followers::getFollowers(int userId){
         return false;
     }
 
-   
+twt::UsersList::UsersList(){
+    nextId = 1;
+}
 
-void twt::UsersList::appendUser(std::string username){
+int twt::UsersList::appendUser(std::string username){
     users.insert({nextId, UserInfo(nextId, username)});
     usersId.insert({username, nextId});
+    int returnId = nextId;
     this->nextId ++;
+    return returnId;
 }
 
 int twt::UsersList::getUserId(std::string username){
@@ -186,13 +190,16 @@ void twt::UsersList::removeUser(int userId){
 int twt::UsersList::createSession(std::string username){
     int id = this->getUserId(username);
     if (id == -1){
-        this->appendUser(username);
+        id = this->appendUser(username);
+        std::cout << "user created: " << username << " with ID: " << id << std::endl;
         users[id].createSession();
         return id;
-    }
-    if (!users[id].maxSessionsReached()){
+    } else if (!users[id].maxSessionsReached()){
         users[id].createSession();
         return id;
+    } else {
+        std::cout << "user " << username << " cannot login. Max session reached" << std::endl;
+        return -1;
     }
     return id;
 }

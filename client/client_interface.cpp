@@ -34,14 +34,16 @@ void printMenu() {
 }
 
 int main() {
-    string username = "Bolson";
+    string username = "Eduardo";
     string str;
     Session session = Session();
     session.sendLogin(username);
+    if (!session.isLogged())
+        return 0;
+    pressEnterToContinue();
     std::thread processingThread(&Session::processBuffer, session);
     std::thread receivingThread(&Session::processReceiving, session);
 
-    pressEnterToContinue();
 
     int choice;
     while (true) {

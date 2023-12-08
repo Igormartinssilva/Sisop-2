@@ -26,6 +26,7 @@ void UDPServer::start() {
     std::thread processRequestsThread(&UDPServer::handlePackets, this);
     std::thread processPacketsThread(&UDPServer::processPacket, this);
     std::thread processMessageThread(&UDPServer::processMessages, this);
+    std::thread processLoginThread(&UDPServer::processLogin, this);
 
     while (running) {
         // Processamento adicional pode ser feito aqui
@@ -34,6 +35,7 @@ void UDPServer::start() {
     processRequestsThread.join();
     processPacketsThread.join();
     processMessageThread.join();
+    processLoginThread.join();
 }
 
 void UDPServer::handlePackets() {
@@ -85,6 +87,7 @@ void UDPServer::processPacket() {
                     std::pair<int, std::string> payload = twt::deserializeMessagePayload(packet);
                     messageBuffer.push({{"", payload.first}, payload.second});
                     returnMessage = "Message request received\nSender ID: " + std::to_string(payload.first) + "\nMessage: " + payload.second + "\n";
+                    sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
                     break;
                 }
                 case twt::PacketType::Follow: {
@@ -92,7 +95,8 @@ void UDPServer::processPacket() {
                     int followerId = payload.first;
                     std::string usernameToFollow = payload.second;
 
-   //codigo do igor para follow                 // Check if the username exists and get its ID
+                    //codigo do igor para follow                 
+                    // Check if the username exists and get its ID
                     int followeeId = usersList.getUserId(usernameToFollow);
                     if (followeeId != -1) {
                         // Check if the follower is not already following the user
@@ -113,29 +117,24 @@ void UDPServer::processPacket() {
                         returnMessage = "Follow request received\nFollower ID: " + std::to_string(followerId) +
                                         "\nUsername: " + usernameToFollow + "\nUser not found\n";
                     }
+                    sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
                     break;
                 }
                 case twt::PacketType::Login: {
                     std::string username = twt::deserializeLoginPayload(packet);
-                    //handleLogin(clientAddress, username);
+                    loginBuffer.push({clientAddress, username});
                     returnMessage = "Login request received\nusername: " + username + "\n";
                     break;
                 }
                 case twt::PacketType::Exit: {
                     int accountId = twt::deserializeExitPayload(packet);
-                    // Handle exit logic if needed
                     //handleLogout(clientAddress, accountId);
                     returnMessage = "Exit request received\nUserId: " + std::to_string(accountId) + "\n";
+                    sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
+
                     break;
                 }
             }
-            char bits[BUFFER_SIZE] = {0};
-            for (int i = 0; i < (int)returnMessage.size(); i ++)
-                bits[i] = returnMessage[i];
-            std::cout << returnMessage << std::endl;
-
-            sendto(serverSocket, bits, BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
-
         } else {
             sleep(0.1);
         }
@@ -162,21 +161,35 @@ void UDPServer::handleLogout(const sockaddr_in& clientAddress, int id) {
 }
 
 
-void UDPServer::handleLogin(const sockaddr_in& clientAddress, const std::string& username) {
-    std::lock_guard<std::mutex> lock(mutex);
-    int id = usersList.createSession(username);
+void UDPServer::processLogin() {
+    while(running) {
+        if (!loginBuffer.empty()){
+            std::lock_guard<std::mutex> lock(mutex);
+            std::pair<const sockaddr_in&, const std::string&> pkt = loginBuffer.front();
+            sockaddr_in clientAddress = pkt.first;
+            std::string username = pkt.second;
 
-    if (id == -1){
-        // Usuário já está logado, enviar uma resposta
-        std::string replyMessage = "LOGIN_FAIL";
-        sendto(serverSocket, replyMessage.c_str(), replyMessage.length(), 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
-    }
-    else{
-        // Enviar resposta de sucesso
-        std::string replyMessage = "LOGIN_SUCCESS " + std::to_string(id);
-        connectedUsers[id].push_back(clientAddress);
-        broadcastMessage(id);
-        sendto(serverSocket, replyMessage.c_str(), replyMessage.length(), 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
+            std::cout << "username: " << username << std::endl;
+
+            int id = usersList.createSession(username);
+            
+            if (id == -1){
+                // Usuário já está logado, enviar uma resposta
+                std::string replyMessage = "LOGIN_FAIL";
+                sendto(serverSocket, replyMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
+            }
+            else{
+                // Enviar resposta de sucesso
+                std::string replyMessage = "LOGIN_SUCCESS " + std::to_string(id);
+                connectedUsers[id].push_back(clientAddress);
+                //broadcastMessage(id);
+                sendto(serverSocket, replyMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
+            }
+
+            loginBuffer.pop();
+        } else {
+            sleep(0.1);
+        }
     }
 }
 

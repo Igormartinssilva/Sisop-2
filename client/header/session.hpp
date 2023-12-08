@@ -8,6 +8,7 @@
 class Session {
 private:
     bool running;
+    bool logged;
 
     Client client;
     twt::UserInfo user;
@@ -16,6 +17,7 @@ private:
 
 public:
     Session();
+    bool isLogged();
     void processReceiving();
     void processBuffer();
     void sendLogin(const std::string& username);

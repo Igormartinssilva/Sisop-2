@@ -91,12 +91,13 @@ namespace twt{
 
 	class UsersList{
 		private:
-			int nextId = 1;
+			int nextId;
 			std::unordered_map<int, UserInfo> users;
 			std::unordered_map<std::string, int> usersId;
 		public:
+			UsersList();
 			int getUserId(std::string username);
-			void appendUser(std::string username);
+			int appendUser(std::string username);
 			void removeUser(int userId);
 			int createSession(std::string username);
 			

@@ -84,6 +84,13 @@ int Client::sendPacket(twt::PacketType type, const std::vector<char>& payload) {
         std::cerr << "Error code: " << errno << std::endl;
     }
     // Print the acknowledgment
+    int id;
     std::cout << "Got an ack: " << ack << std::endl;
-    return rand();
+    std::string str(ack); 
+    if (packet.type == twt::Login && str.length() > 12){
+        id = std::stoi(str.substr(14));
+    }else{
+        id = -1;
+    }
+    return id;
 }
