@@ -175,7 +175,7 @@ int twt::UsersList::appendUser(std::string username){
 }
 
 int twt::UsersList::getUserId(std::string username){
-    if (usersId.find(username) != usersId.end())
+    if (usersId.count(username) > 0)
         return usersId[username];
     else return -1;
 }

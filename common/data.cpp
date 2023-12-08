@@ -178,9 +178,10 @@ int twt::UsersList::appendUser(std::string username){
 }
 
 int twt::UsersList::getUserId(std::string username){
-    if (usersId.find(username) != usersId.end())
-        return usersId[username];
-    else return -1;
+    for (std::pair<const std::string, int> id : usersId) 
+        if (std::strcmp(id.first.c_str(), username.c_str()) == 0)
+            return id.second;
+    return -1;
 }
 
 void twt::UsersList::removeUser(int userId){

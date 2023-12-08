@@ -105,16 +105,16 @@ void UDPServer::processPacket() {
                             followers.follow(followerId, followeeId);
 
                             // Return a success message
-                            returnMessage = "Follow request received\nFollower ID: " + std::to_string(followerId) +
+                            returnMessage = "Follow request received 1\nFollower ID: " + std::to_string(followerId) +
                                             "\nUsername: " + usernameToFollow + "\nFollow successful\n";
                         } else {
                             // Return a message indicating that the follower is already following the user
-                            returnMessage = "Follow request received\nFollower ID: " + std::to_string(followerId) +
+                            returnMessage = "Follow request received 2\nFollower ID: " + std::to_string(followerId) +
                                             "\nUsername: " + usernameToFollow + "\nAlready following\n";
                         }
                     } else {
                         // Return a message indicating that the username does not exist
-                        returnMessage = "Follow request received\nFollower ID: " + std::to_string(followerId) +
+                        returnMessage = "Follow request received 3\nFollower ID: " + std::to_string(followerId) +
                                         "\nUsername: " + usernameToFollow + "\nUser not found\n";
                     }
                     sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
@@ -200,7 +200,7 @@ void UDPServer::processMessages(){
             twt::Message msg = messageBuffer.front();
             std::cout << msg.sender.userId << std::endl;
             std::unordered_set<int> userFollowers = this->followers.getFollowers(msg.sender.userId);
-            std::cout << "Lista de followers de " << msg.sender.userId << " " << msg.sender.username << " ";
+            std::cout << "Lista de followers de " << msg.sender.userId << "-" << msg.sender.username << ": ";
             for (auto i : userFollowers) std::cout << i << ", ";
             std::cout << std::endl;
             for (auto f : userFollowers){
