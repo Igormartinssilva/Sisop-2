@@ -83,6 +83,7 @@ namespace twt{
 			UserInfo();
 			UserInfo(int userId, std::string username);
 			std::string getUsername();
+			void logout();
 			int getId();
 			bool maxSessionsReached();
 			void createSession();
@@ -96,6 +97,7 @@ namespace twt{
 			std::unordered_map<std::string, int> usersId;
 		public:
 			UsersList();
+			void logout(int userId);
 			int getUserId(std::string username);
 			int appendUser(std::string username);
 			void removeUser(int userId);

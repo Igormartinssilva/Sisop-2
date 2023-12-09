@@ -17,6 +17,7 @@ private:
 
 public:
     Session();
+    Session(std::string);
     bool isLogged();
     void processReceiving();
     void processBuffer();

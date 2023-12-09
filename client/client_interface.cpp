@@ -27,19 +27,32 @@ void pressEnterToContinue() {
 }
 
 void printMenu() {
-    cout << BLUE << "1. " << RESET << "Send Message\n";
-    cout << GREEN << "2. " << RESET << "Follow User\n";
+    cout << BLUE << ">>-- Welcome to Y --<<" << RESET << std::endl << std::endl; 
+    cout << RED << "1. " << RESET << "Send Message\n";
+    cout << RED << "2. " << RESET << "Follow User\n";
     cout << RED << "3. " << RESET << "Exit\n";
-    cout << "Choose an option: ";
+    cout << BLUE <<"Choose an option: " << RESET;
 }
 
-int main() {
-    string username = "Eduardo";
+int main(int argc, char **argv) {
+    Session session(argv[1]);
     string str;
-    Session session = Session();
-    session.sendLogin(username);
+    string username;
+
+    if (argc < 2)
+        cerr << "you must inform IP"<< endl;
+    
+    clearScreen();
+    cout << BLUE << ">>-- Welcome to Y --<<" << RESET << endl;
+
+    cout << "Connecting to server " << RED << argv[1] << RESET << " at port " << RED << PORT << RESET << "..." << endl;
+    cout << BLUE << "Insert your username: " << RESET;
+    getline(cin, username);
+
+    session.sendLogin("Luis");
     if (!session.isLogged())
         return 0;
+    
     pressEnterToContinue();
     std::thread processingThread(&Session::processBuffer, session);
     std::thread receivingThread(&Session::processReceiving, session);
@@ -82,4 +95,5 @@ int main() {
     }
     processingThread.join();
     receivingThread.join();
+    return 0;
 }

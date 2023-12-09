@@ -46,7 +46,6 @@ private:
     twt::Followers followers;
     twt::UsersList usersList;
     std::mutex mutex;
-    std::condition_variable cv;
     bool running;
 };
 

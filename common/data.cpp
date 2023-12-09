@@ -177,6 +177,10 @@ int twt::UsersList::appendUser(std::string username){
     return returnId;
 }
 
+void twt::UsersList::logout(int userId){
+    users[userId].logout();
+}
+
 int twt::UsersList::getUserId(std::string username){
     for (std::pair<const std::string, int> id : usersId) 
         if (std::strcmp(id.first.c_str(), username.c_str()) == 0)
@@ -194,13 +198,17 @@ int twt::UsersList::createSession(std::string username){
         id = this->appendUser(username);
         std::cout << "user created: " << username << " with ID: " << id << std::endl;
         users[id].createSession();
-        return id;
-    } else if (!users[id].maxSessionsReached()){
-        users[id].createSession();
+        std::cout << "creating session: " << username << " with ID: " << id << std::endl;
         return id;
     } else {
-        std::cout << "user " << username << " cannot login. Max session reached" << std::endl;
-        return -1;
+        if (!users[id].maxSessionsReached()){
+            users[id].createSession();
+            std::cout << "creating session: " << username << " with ID: " << id << std::endl;
+            return id;
+        } else {
+            std::cout << "user " << username << " cannot login. Max session reached" << std::endl;
+            return -1;
+        }
     }
     return id;
 }
@@ -221,12 +229,17 @@ int twt::UserInfo::getId(){
     return this->user.userId;
 }
 
+void twt::UserInfo::logout(){
+    if (activeSessions > 0)
+        activeSessions --;
+}
+
 std::string twt::UserInfo::getUsername(){
     return user.username;
 }
 
 bool twt::UserInfo::maxSessionsReached(){
-    return activeSessions <= MAX_SESSIONS;
+    return activeSessions >= MAX_SESSIONS;
 }
 
 void twt::UserInfo::createSession(){

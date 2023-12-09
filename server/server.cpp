@@ -128,8 +128,9 @@ void UDPServer::processPacket() {
                 }
                 case twt::PacketType::Exit: {
                     int accountId = twt::deserializeExitPayload(packet);
-                    //handleLogout(clientAddress, accountId);
+                    handleLogout(clientAddress, accountId);
                     returnMessage = "Exit request received\nUserId: " + std::to_string(accountId) + "\n";
+                    std::cout << returnMessage;
                     sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
 
                     break;
@@ -142,7 +143,7 @@ void UDPServer::processPacket() {
 }
 
 void UDPServer::handleLogout(const sockaddr_in& clientAddress, int id) {
-    this->usersList.removeUser(id);
+    this->usersList.logout(id);
 
     // Find the connected sessions for the user
     std::vector<sockaddr_in>& sessions = this->connectedUsers[id];

@@ -10,8 +10,13 @@ Session::Session() : client() {
         std::cout << "ip found in file, ip: " << buffer << std::endl;
         client.setServer(buffer.c_str());
     } else {
-        client.setServer("143.54.48.125"); //143.54.50.200 (dick) 143.54.48.125(luis) 172.25.219.12(igor)
+        client.setServer("172.17.0.1"); //143.54.50.200 (dick) 143.54.48.125(luis) 172.25.219.12(igor)
     }
+}
+
+Session::Session(std::string ip) : client() {
+    this->running = true;
+    client.setServer("172.17.0.1");
 }
 
 bool Session::isLogged(){
