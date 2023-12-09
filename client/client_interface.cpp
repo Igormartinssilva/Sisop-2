@@ -49,7 +49,7 @@ int main(int argc, char **argv) {
     cout << BLUE << "Insert your username: " << RESET;
     getline(cin, username);
 
-    session.sendLogin("Luis");
+    session.sendLogin(username);
     if (!session.isLogged())
         return 0;
     

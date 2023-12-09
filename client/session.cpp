@@ -16,7 +16,7 @@ Session::Session() : client() {
 
 Session::Session(std::string ip) : client() {
     this->running = true;
-    client.setServer("172.17.0.1");
+    client.setServer(ip.c_str());
 }
 
 bool Session::isLogged(){
