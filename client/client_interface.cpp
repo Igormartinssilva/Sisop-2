@@ -90,6 +90,7 @@ int main(int argc, char **argv) {
             }
             default:
                 cout << RED << "Invalid choice. Please try again.\n" << RESET;
+                cin.ignore();
                 pressEnterToContinue();
         }
     }
