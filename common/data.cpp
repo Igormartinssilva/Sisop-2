@@ -219,17 +219,23 @@ twt::UserInfo::UserInfo(){
     this->activeSessions = 0;
 }
 
-twt::UserInfo::UserInfo(int userId, std::string username, std::unordered_set<int> followers){
+twt::UserInfo::UserInfo(int userId, std::string username){
     this->user.username = username;
     this->user.userId = userId;
-    this->followers = followers;
     this->activeSessions = 0;
 }
 
+int twt::UserInfo::getId(){
+    return this->user.userId;
+}
 
 void twt::UserInfo::logout(){
     if (activeSessions > 0)
         activeSessions --;
+}
+
+std::string twt::UserInfo::getUsername(){
+    return user.username;
 }
 
 bool twt::UserInfo::maxSessionsReached(){
@@ -239,15 +245,3 @@ bool twt::UserInfo::maxSessionsReached(){
 void twt::UserInfo::createSession(){
     this->activeSessions ++;
 }
-
-int twt::UserInfo::getId() const{
-    return this->user.userId;
-}
-
-std::string twt::UserInfo::getUsername() const{
-    return user.username;
-}
-
-const std::unordered_set<int> twt::UserInfo::getFollowers() const {
-                return this->followers;
-            }

@@ -79,16 +79,14 @@ namespace twt{
 		private:
 			User user;
 			int activeSessions;
-			std::unordered_set<int> followers;
 		public:
 			UserInfo();
-			UserInfo(int userId, std::string username, std::unordered_set<int> followers);
-			std::string getUsername() const;
-			int getId() const;
+			UserInfo(int userId, std::string username);
+			std::string getUsername();
 			void logout();
+			int getId();
 			bool maxSessionsReached();
 			void createSession();
-			const std::unordered_set<int> getFollowers() const;
 			
 	};
 
