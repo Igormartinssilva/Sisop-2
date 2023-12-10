@@ -12,7 +12,7 @@ private:
     bool logged;
 
     Client client;
-    twt::UserInfo user;
+    twt::User user;
     std::queue<std::pair<const sockaddr_in&, const std::string&>> receivingBuffer;
     int clientSocket;
 

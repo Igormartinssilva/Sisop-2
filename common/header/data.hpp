@@ -12,7 +12,6 @@
 #include <cstdint>
 #include <sstream>
 #include "../../asserts/constraints.hpp"
-#include "../../server/header/server.hpp"
 
 namespace twt{
 
@@ -83,13 +82,14 @@ namespace twt{
 			std::unordered_set<int> followers;
 		public:
 			UserInfo();
+			UserInfo(int userId, std::string username);
 			UserInfo(int userId, std::string username, std::unordered_set<int> followers);
-			std::string getUsername() const;
-			int getId() const;
+			std::string getUsername();
+			std::unordered_set<int> getFollowers();
 			void logout();
+			int getId();
 			bool maxSessionsReached();
 			void createSession();
-			const std::unordered_set<int> getFollowers() const;
 			
 	};
 
@@ -103,11 +103,12 @@ namespace twt{
 			void logout(int userId);
 			int getUserId(std::string username);
 			int appendUser(std::string username);
+			std::string getUsername(int userId);
 			void removeUser(int userId);
 			int createSession(std::string username);
-			std::vector<twt::UserInfo> mapToVector();
-			std::unordered_map<int, UserInfo> vectorToMap(const std::vector<twt::UserInfo>& users);
-			
+
+			std::vector<twt::UserInfo> storageMap();
+			void loadMap(std::vector<twt::UserInfo>& users_list);
 	};
 
 	struct Message {

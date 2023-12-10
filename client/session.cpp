@@ -26,7 +26,10 @@ bool Session::isLogged(){
 void Session::sendLogin(const std::string& username) {
     int id = client.sendLogin(username);
     if (id != -1){
-        this->user = twt::UserInfo(id, username, followers.getFollowers(id));
+        twt::User user;
+        user.userId = id;
+        user.username = username;
+        this->user = user;
         this->logged = true;    
     }
     else
@@ -34,21 +37,21 @@ void Session::sendLogin(const std::string& username) {
 }
 
 void Session::sendFollow(const std::string& username) {
-    if (this->user.getId() == 0)
+    if (this->user.userId == 0)
         return;
-    client.sendFollow(this->user.getId(), username);
+    client.sendFollow(this->user.userId, username);
 }
 
 void Session::sendMessage(const std::string& messageContent) {
-    if (this->user.getId() == 0)
+    if (this->user.userId == 0)
         return;
-    client.sendMessage(this->user.getId(), messageContent);
+    client.sendMessage(this->user.userId, messageContent);
 }
 
 void Session::sendExit() {
-    if (this->user.getId() == 0)
+    if (this->user.userId == 0)
         return;
-    client.sendExit(this->user.getId());
+    client.sendExit(this->user.userId);
 }
 
 void Session::processReceiving() {

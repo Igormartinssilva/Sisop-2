@@ -105,7 +105,7 @@ void UDPServer::processPacket() {
                         if (!followers.isFollowing(followerId, followeeId)) {
                             // Perform the follow operation
                             followers.follow(followerId, followeeId);
-                            write_file("database.txt", usersList.mapToVector());
+                            write_file("database.txt", usersList.storageMap());
 
                             // Return a success message
                             returnMessage = "Follow request received 1\nFollower ID: " + std::to_string(followerId) +
@@ -232,6 +232,10 @@ void UDPServer::broadcastMessage(int receiverId) {
         }
         userMessageBuffer[receiverId].pop();
     }
+}
+
+void UDPServer::saveDataBase(){
+
 }
 
 int main() {

@@ -46,7 +46,7 @@ private:
     std::queue<twt::Message> messageBuffer; // Messages of the tr
     std::queue<std::pair<const sockaddr_in&, const std::string&>> loginBuffer;
 
-    
+    void saveDataBase();
     
     std::mutex mutex;
     bool running;

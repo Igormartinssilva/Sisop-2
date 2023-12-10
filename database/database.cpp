@@ -1,7 +1,7 @@
-#include <database.hpp>
+#include "database.hpp"
 
 // Função para converter uma string para um unordered_set de int
-std::unordered_set<int> stringParaUnorderedSet(const std::string& input) {
+std::unordered_set<int> stringParaUnorderedSet( std::string& input) {
     std::unordered_set<int> result;
 
     std::istringstream iss(input);
@@ -15,9 +15,9 @@ std::unordered_set<int> stringParaUnorderedSet(const std::string& input) {
 }
 
 // Função para converter um unordered_set de int para uma string
-std::string unorderedSetParaString(const std::unordered_set<int>& mySet) {
+std::string unorderedSetParaString( std::unordered_set<int>& mySet) {
     std::ostringstream oss;
-    for (const auto& elemento : mySet) {
+    for ( auto& elemento : mySet) {
         oss << elemento << ",";
     }
     if (!mySet.empty()) {
@@ -27,7 +27,7 @@ std::string unorderedSetParaString(const std::unordered_set<int>& mySet) {
 }
 
 // Função para ler um arquivo e retornar um vetor de UserInfo
-std::vector<twt::UserInfo> read_file(const std::string& filename) {
+std::vector<twt::UserInfo> read_file( std::string& filename) {
     std::ifstream file(filename);
     std::vector<twt::UserInfo> usuarios;
 
@@ -59,7 +59,7 @@ std::vector<twt::UserInfo> read_file(const std::string& filename) {
     return usuarios;
 }
 
-std::string format_data(const twt::UserInfo& user) {
+std::string format_data(twt::UserInfo& user) {
     std::ostringstream formatted_data;
     user.getFollowers();
     formatted_data << user.getUsername() << ";" << unorderedSetParaString(user.getFollowers()) << ";" << user.getId();
@@ -67,7 +67,7 @@ std::string format_data(const twt::UserInfo& user) {
 }
 
 // Função para escrever um vetor de UserInfo em um arquivo
-void write_file(const std::string& filename, const std::vector<twt::UserInfo>& users) {
+void write_file( std::string& filename,  std::vector<twt::UserInfo>& users) {
     std::ofstream file(filename);
 
     if (!file.is_open()) {
@@ -75,7 +75,7 @@ void write_file(const std::string& filename, const std::vector<twt::UserInfo>& u
         return;
     }
 
-    for (const auto& user : users) {
+    for ( auto& user : users) {
         std::string formatted_data = format_data(user);
         file << formatted_data << std::endl;
     }
