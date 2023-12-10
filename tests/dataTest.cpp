@@ -16,11 +16,12 @@ int main() {
     user.username = "JohnDoe";
     user.userId = 42;
 
+    twt::Followers followers;
+
     // Create a UserInfo
-    twt::UserInfo userInfo(1, "Alice");
+    twt::UserInfo userInfo(1, "Alice", followers.getFollowers(1));
 
     // Create a Followers object
-    twt::Followers followers;
     followers.follow(1, 2);
 
     // Create a UsersList object

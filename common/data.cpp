@@ -6,7 +6,6 @@
 #include <iostream>
 #include <cassert>
 #define MAGIC_NUMBER 0
-#include <cstdint>
 
 namespace twt {
 
@@ -170,7 +169,7 @@ twt::UsersList::UsersList(){
 }
 
 int twt::UsersList::appendUser(std::string username){
-    users.insert({nextId, UserInfo(nextId, username)});
+    users.insert({nextId, UserInfo(nextId, username, followers.getFollowers(nextId))});
     usersId.insert({username, nextId});
     int returnId = nextId;
     this->nextId ++;
@@ -180,6 +179,7 @@ int twt::UsersList::appendUser(std::string username){
 void twt::UsersList::logout(int userId){
     users[userId].logout();
 }
+
 
 int twt::UsersList::getUserId(std::string username){
     for (std::pair<const std::string, int> id : usersId) 
@@ -212,6 +212,27 @@ int twt::UsersList::createSession(std::string username){
     }
     return id;
 }
+
+std::vector<twt::UserInfo> twt::UsersList::mapToVector() {
+    std::vector<twt::UserInfo> result;
+
+    for (const auto& pair : this->users) {
+        result.push_back(pair.second);  // Adiciona cada UserInfo ao vetor
+    }
+
+    return result;
+}
+
+std::unordered_map<int, UserInfo> twt::UsersList::vectorToMap(const std::vector<twt::UserInfo>& users_list) {
+    
+
+    for (const auto& user : users_list) {
+        this->users[user.getId()] = user;  // Usa getId() como chave e insere no mapa
+    }
+
+    return this->users;
+}
+
 
 twt::UserInfo::UserInfo(){
     this->user.username = "";

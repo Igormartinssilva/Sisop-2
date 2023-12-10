@@ -3,6 +3,7 @@
 #include "client.hpp"
 #include "../../common/header/data.hpp"
 #include "message.hpp"
+#include "../../server/header/server.hpp"
 #include <fstream>
 
 class Session {

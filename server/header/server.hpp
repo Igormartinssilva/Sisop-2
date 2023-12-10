@@ -16,12 +16,15 @@
 #include <arpa/inet.h>
 #include "../../common/header/data.hpp"
 #include "../../asserts/constraints.hpp"
+#include "../../database/database.hpp"
 
 class UDPServer {
 public:
     UDPServer(int port);
     ~UDPServer();
     void start();
+    twt::Followers followers;
+    twt::UsersList usersList;
 
 private:
     void handlePackets();
@@ -43,8 +46,8 @@ private:
     std::queue<twt::Message> messageBuffer; // Messages of the tr
     std::queue<std::pair<const sockaddr_in&, const std::string&>> loginBuffer;
 
-    twt::Followers followers;
-    twt::UsersList usersList;
+    
+    
     std::mutex mutex;
     bool running;
 };

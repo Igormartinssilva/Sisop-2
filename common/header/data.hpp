@@ -12,6 +12,7 @@
 #include <cstdint>
 #include <sstream>
 #include "../../asserts/constraints.hpp"
+#include "../../server/header/server.hpp"
 
 namespace twt{
 
@@ -104,6 +105,8 @@ namespace twt{
 			int appendUser(std::string username);
 			void removeUser(int userId);
 			int createSession(std::string username);
+			std::vector<twt::UserInfo> mapToVector();
+			std::unordered_map<int, UserInfo> vectorToMap(const std::vector<twt::UserInfo>& users);
 			
 	};
 

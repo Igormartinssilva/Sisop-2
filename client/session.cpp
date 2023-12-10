@@ -26,7 +26,7 @@ bool Session::isLogged(){
 void Session::sendLogin(const std::string& username) {
     int id = client.sendLogin(username);
     if (id != -1){
-        this->user = twt::UserInfo(id, username);
+        this->user = twt::UserInfo(id, username, followers.getFollowers(id));
         this->logged = true;    
     }
     else

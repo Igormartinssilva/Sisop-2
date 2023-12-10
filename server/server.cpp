@@ -4,6 +4,8 @@
 #include <sstream>
 #include <string>
 
+
+
 UDPServer::UDPServer(int port) {
     serverSocket = socket(AF_INET, SOCK_DGRAM, 0);
 
@@ -103,6 +105,7 @@ void UDPServer::processPacket() {
                         if (!followers.isFollowing(followerId, followeeId)) {
                             // Perform the follow operation
                             followers.follow(followerId, followeeId);
+                            write_file("database.txt", usersList.mapToVector());
 
                             // Return a success message
                             returnMessage = "Follow request received 1\nFollower ID: " + std::to_string(followerId) +
