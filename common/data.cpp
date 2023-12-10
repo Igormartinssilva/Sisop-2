@@ -188,6 +188,10 @@ int twt::UsersList::getUserId(std::string username){
     return -1;
 }
 
+std::string twt::UsersList::getUsername(int userId){
+    return users[userId].getUsername();
+}
+
 void twt::UsersList::removeUser(int userId){
     users.erase(userId);
 }

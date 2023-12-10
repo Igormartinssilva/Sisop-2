@@ -100,6 +100,7 @@ namespace twt{
 			void logout(int userId);
 			int getUserId(std::string username);
 			int appendUser(std::string username);
+			std::string getUsername(int userId);
 			void removeUser(int userId);
 			int createSession(std::string username);
 			

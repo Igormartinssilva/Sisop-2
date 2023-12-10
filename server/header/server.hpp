@@ -39,6 +39,7 @@ private:
     std::queue<std::pair<const sockaddr_in&, const std::vector<char>>> processingBuffer;
 
     std::unordered_map<int, std::vector<sockaddr_in>> connectedUsers;  // User ID -> Set of connected sessions
+    
     std::unordered_map<int, std::queue<twt::Message>> userMessageBuffer;  // User ID -> Queue of stored messages
     std::queue<twt::Message> messageBuffer; // Messages of the tr
     std::queue<std::pair<const sockaddr_in&, const std::string&>> loginBuffer;

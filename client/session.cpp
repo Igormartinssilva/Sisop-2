@@ -60,10 +60,17 @@ void Session::processReceiving() {
         memset(buffer, 0, BUFFER_SIZE);
 
         int bytesRead = recvfrom(clientSocket, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&serverAddress, &serverSize);
-        if (bytesRead > 0) {            
+        if (bytesRead > 0) 
+        {            
             std::lock_guard<std::mutex> lock(mutex);
             receivingBuffer.push({serverAddress, buffer});
-
+            std::string str(buffer);
+            int index = str.find(',');
+            std::string username = str.substr(0, index);
+            int newIndex = str.find(',', index+1);
+            int userId = atoi(str.substr(index+1, newIndex).c_str());
+            std::string content = str.substr(newIndex+1);
+            notificationBuffer.push({{username, userId}, content});
         }
     }
 }
@@ -85,5 +92,14 @@ void Session::processBuffer() {
         } else {
             sleep(0.1);
         }
+    }
+}
+
+void Session::processNotifBuffer() {
+    while(!notificationBuffer.empty()) {
+        twt::Message msg = notificationBuffer.front();
+        std::cout << "New Message from " << msg.sender.username << ": " << std::endl;
+        std::cout << msg.content << std::endl;
+        notificationBuffer.pop();
     }
 }
