@@ -10,15 +10,15 @@
 #include <iterator>
 #include "../common/header/data.hpp"
 
-std::unordered_set<int> stringParaUnorderedSet(const std::string& input);
+std::unordered_set<int> stringParaUnorderedSet( std::string& input);
 
-std::string unorderedSetParaString(const std::unordered_set<int>& mySet);
+std::string unorderedSetParaString( std::unordered_set<int>& mySet);
 
-std::vector<twt::UserInfo> read_file(const std::string& filename);
+std::vector<twt::UserInfo> read_file( std::string& filename);
 
-std::string format_data(const twt::UserInfo& user);
+std::string format_data( twt::UserInfo& user);
 
-void write_file(const std::string& filename, const std::vector<twt::UserInfo>& users);
+void write_file( std::string& filename,  std::vector<twt::UserInfo>& users);
 
 //Falta implementar get_next_id, salvar e carregar da database
 
