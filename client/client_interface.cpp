@@ -2,9 +2,9 @@
 
 #include "header/session.hpp"
 #include <cstdlib> // for std::system
-
+#include "../common/header/data.hpp"
 using namespace std;
-
+#include <semaphore.h>
 // ANSI color codes
 constexpr char RED[] = "\033[1;31m";
 constexpr char GREEN[] = "\033[1;32m";
@@ -39,6 +39,9 @@ int main(int argc, char **argv) {
     Session session(argv[1]);
     string str;
     string username;
+
+    // Inicializa os semáforos
+    twt::initializeSemaphores();
 
     if (argc < 2)
         cerr << "you must inform IP"<< endl;
@@ -108,5 +111,9 @@ int main(int argc, char **argv) {
     processingThread.join();
     receivingThread.join();
     //notificationsThread.join();
+    
+    // Destrói os semáforos no final do programa
+    twt::destroySemaphores();
+
     return 0;
 }

@@ -7,8 +7,17 @@
 #include <cassert>
 #define MAGIC_NUMBER 0
 #include <cstdint>
+#include <semaphore.h>
+#include <vector>
+#include <unordered_set>
+
+
+
 
 namespace twt {
+
+    // Definindo um semáforo global para controlar o número de sessões por usuário
+    sem_t sessionSemaphore;
 
     std::vector<char> serializeMessagePayload(int senderId, const std::string& message) {
         assert(BUFFER_SIZE >= 8); // Ensure there is enough space for the header and payload
@@ -146,6 +155,56 @@ namespace twt {
 
         return pkg;
     }
+
+     // Função para inicializar o semáforo no início do programa
+    void initializeSemaphores() {
+        // Inicialize o semáforo com um valor de 2 (duas sessões permitidas por vez)
+        sem_init(&sessionSemaphore, 0, 2);
+    }
+
+     // Função para destruir o semáforo no final do programa
+    void destroySemaphores() {
+        sem_destroy(&sessionSemaphore);
+    }
+
+    // Função para criar uma sessão para um usuário
+    int UsersList::createSession(std::string username) {
+        int id = getUserId(username);
+
+        if (id == -1) {
+            id = appendUser(username);
+            std::cout << "User created: " << username << " with ID: " << id << std::endl;
+            users[id].createSession();
+            std::cout << "Creating session: " << username << " with ID: " << id << std::endl;
+            return id;
+        } else {
+            // Agora, antes de criar uma nova sessão, esperamos o semáforo
+            sem_wait(&sessionSemaphore);
+
+            if (!users[id].maxSessionsReached()) {
+                users[id].createSession();
+                std::cout << "Creating session: " << username << " with ID: " << id << std::endl;
+                return id;
+            } else {
+                std::cout << "User " << username << " cannot log in. Max session reached" << std::endl;
+
+                // Se não for possível criar uma sessão, liberamos o semáforo
+                sem_post(&sessionSemaphore);
+
+                return -1;
+            }
+        }
+
+        return id;
+    }
+    
+     // Função para fazer logout de uma sessão de um usuário
+    void UsersList::logout(int userId) {
+        users[userId].logout();
+
+        // Após o logout, liberamos o semáforo para permitir que outro usuário se conecte
+        sem_post(&sessionSemaphore);
+    }
 }
 
 
@@ -232,16 +291,16 @@ twt::UserInfo::UserInfo(int userId, std::string username){
 int twt::UserInfo::getId(){
     return this->user.userId;
 }
-
+/*
 void twt::UserInfo::logout(){
     if (activeSessions > 0)
         activeSessions --;
 }
-
+*/
 std::string twt::UserInfo::getUsername(){
     return user.username;
 }
-
+/*
 bool twt::UserInfo::maxSessionsReached(){
     return activeSessions >= MAX_SESSIONS;
 }
@@ -249,3 +308,4 @@ bool twt::UserInfo::maxSessionsReached(){
 void twt::UserInfo::createSession(){
     this->activeSessions ++;
 }
+*/

@@ -110,6 +110,9 @@ namespace twt{
 		User sender;
 		std::string content;
 	};
+
+	void initializeSemaphores();
+    void destroySemaphores();
 }
 
 #endif
