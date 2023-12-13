@@ -10,7 +10,7 @@
 #include <vector>
 #include <unordered_set>
 
-
+sem_t twt::sessionSemaphore;
 namespace twt {
 
     
