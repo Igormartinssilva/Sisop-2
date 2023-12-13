@@ -11,6 +11,7 @@
 #include <queue>
 #include <cstdint>
 #include <sstream>
+#include <semaphore.h>
 #include "../../asserts/constraints.hpp"
 
 namespace twt{
@@ -111,6 +112,7 @@ namespace twt{
 		std::string content;
 	};
 
+	sem_t sessionSemaphore;
 	void initializeSemaphores();
     void destroySemaphores();
 }
