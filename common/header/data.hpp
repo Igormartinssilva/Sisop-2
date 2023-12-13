@@ -112,7 +112,7 @@ namespace twt{
 		std::string content;
 	};
 
-	sem_t sessionSemaphore;
+	extern sem_t sessionSemaphore;
 	void initializeSemaphores();
     void destroySemaphores();
 }
