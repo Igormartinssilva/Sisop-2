@@ -19,6 +19,33 @@ UDPServer::~UDPServer() {
     close(serverSocket);
 }
 
+constexpr char RED[] = "\033[1;31m";
+constexpr char GREEN[] = "\033[1;32m";
+constexpr char YELLOW[] = "\033[1;33m";
+constexpr char BLUE[] = "\033[1;34m";
+constexpr char RESET[] = "\033[0m";
+void printMenu() {
+    std::cout << BLUE << ">>-- Welcome to Y --<<" << RESET << std::endl << std::endl; 
+    std::cout << RED << "1. " << RESET << "Display User List\n";
+    std::cout << RED << "2. " << RESET << "Display Followers List\n";
+    std::cout << RED << "3. " << RESET << "Exit\n";
+    std::cout << BLUE << "Choose an option: " << RESET;
+}
+
+void clearScreen() {
+#ifdef _WIN32
+    std::system("cls");
+#else
+    std::system("clear");
+#endif
+}
+
+void pressEnterToContinue() {
+    std::cout << YELLOW << "\n[Press Enter to Continue]" << RESET;
+    std::cin.ignore(); // Wait for Enter key press
+}
+
+
 void UDPServer::start() {
     std::cout << "Server listening on port " << PORT << "...\n";
 
@@ -29,7 +56,33 @@ void UDPServer::start() {
     std::thread processLoginThread(&UDPServer::processLogin, this);
 
     while (running) {
-        // Processamento adicional pode ser feito aqui
+        int choice;
+        clearScreen();
+        printMenu();
+        std::cin >> choice;
+        std::cin.ignore(); // Consume newline character
+
+        switch (choice) {
+            case 1: {
+                displayUserList();
+                pressEnterToContinue();
+                break;
+            }
+            case 2: {
+                pressEnterToContinue();
+                break;
+            }
+            case 3: {
+                std::cout << "Exiting the application.\n";
+                pressEnterToContinue();
+                running = false;
+                break;
+            }
+            default:
+                std::cout << "Invalid choice. Please try again.\n";
+                std::cin.ignore();
+                pressEnterToContinue();
+        }
     }
 
     processRequestsThread.join();
@@ -129,7 +182,7 @@ void UDPServer::processPacket() {
                 case twt::PacketType::Exit: {
                     int accountId = twt::deserializeExitPayload(packet);
                     handleLogout(clientAddress, accountId);
-                    returnMessage = "Exit request received\nUserId: " + std::to_string(accountId) + "\n";
+                    returnMessage = "\n> Exit request received\nUserId: " + std::to_string(accountId) + "\n";
                     std::cout << returnMessage;
                     sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
 
@@ -170,7 +223,7 @@ void UDPServer::processLogin() {
             sockaddr_in clientAddress = pkt.first;
             std::string username = pkt.second;
 
-            std::cout << "username: " << username << std::endl;
+            // std::cout << "username: " << username << std::endl;
 
             int id = usersList.createSession(username);
             
@@ -221,7 +274,9 @@ void UDPServer::broadcastMessage(int receiverId) {
     while (!userMessageBuffer[receiverId].empty()){ 
         twt::Message message = userMessageBuffer[receiverId].front();
         for (const sockaddr_in& userAddr : connectedUsers[receiverId]){
-            std::cout << "Sending message: \"" << message.content.c_str() << "\" to user @" << std::to_string(receiverId) << " from user @" << message.sender.username << " (id " << message.sender.userId << ")" << std::endl;
+            std::cout << "\n> Sending message: \"" << message.content.c_str() << 
+                "\" to user @"<< usersList.getUsername(receiverId) << "(id " << std::to_string(receiverId) << ")" <<
+                " from user @" << message.sender.username << " (id " << message.sender.userId << ")" << std::endl;
             std::string str(
                 message.sender.username + ',' + 
                 std::to_string(message.sender.userId) + ',' +
@@ -232,6 +287,17 @@ void UDPServer::broadcastMessage(int receiverId) {
         userMessageBuffer[receiverId].pop();
     }
 }
+
+
+std::unordered_map<int, twt::UserInfo> UDPServer::getUsersList() {
+    return this->usersList.getUserListInfo();
+}
+
+void UDPServer::displayUserList() {
+    std::cout << "User List:\n";
+    for (auto user : this->getUsersList())
+        user.second.display();
+    }
 
 int main() {
     UDPServer udpServer(PORT);

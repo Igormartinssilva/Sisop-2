@@ -185,6 +185,10 @@ bool twt::Followers::isFollowing(int followerId, int followingId) {
     return false;
 }
 
+std::unordered_map<int, std::unordered_set<int>> twt::Followers::getFollowersList() {
+    return this->followers;
+}
+
 twt::UsersList::UsersList(){
     nextId = 1;
 }
@@ -215,6 +219,15 @@ std::string twt::UsersList::getUsername(int userId){
 void twt::UsersList::removeUser(int userId){
     users.erase(userId);
 }
+
+twt::UserInfo twt::UsersList::getUser(int id){
+    return this->users[id];
+}
+
+std::unordered_map<int, twt::UserInfo> twt::UsersList::getUserListInfo(){
+    return this->users;
+}
+
 /*
 int twt::UsersList::createSession(std::string username){
      int id = getUserId(username);
@@ -279,7 +292,16 @@ void twt::UserInfo::createSession(){
     this->activeSessions ++;
 }
 
+constexpr char RED[] = "\033[1;31m";
+constexpr char GREEN[] = "\033[1;32m";
+constexpr char YELLOW[] = "\033[1;33m";
+constexpr char BLUE[] = "\033[1;34m";
+constexpr char RESET[] = "\033[0m";
 
+void twt::UserInfo::display() {
+    std::cout << "\033[1;34m" << getId() << "\033[0m" << "\t - @";
+    std::cout << "\033[1;31m" << getUsername() << "\033[0m" << std::endl;
+}
 
 
 
@@ -289,9 +311,9 @@ void twt::UserInfo::createSession(){
 
         if (id == -1) {
             id = appendUser(username);
-            std::cout << "User created: " << username << " with ID: " << id << std::endl;
+            std::cout << "\n> User created: " << username << " with ID: " << id << std::endl;
             users[id].createSession();
-            std::cout << "Creating session: " << username << " with ID: " << id << std::endl;
+            std::cout << "\n> Creating session: " << username << " with ID: " << id << std::endl;
             return id;
         } else {
             // Agora, antes de criar uma nova sessão, esperamos o semáforo
@@ -299,10 +321,10 @@ void twt::UserInfo::createSession(){
 
             if (!users[id].maxSessionsReached()) {
                 users[id].createSession();
-                std::cout << "Creating session: " << username << " with ID: " << id << std::endl;
+                std::cout << "\n> Creating session: " << username << " with ID: " << id << std::endl;
                 return id;
             } else {
-                std::cout << "User " << username << " cannot log in. Max session reached" << std::endl;
+                std::cout << "\n> User " << username << " cannot log in. Max session reached" << std::endl;
 
                 // Se não for possível criar uma sessão, liberamos o semáforo
                 sem_post(&twt::sessionSemaphore);

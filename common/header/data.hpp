@@ -73,6 +73,7 @@ namespace twt{
 			void follow(int followerId, int followingId);
 			std::unordered_set<int> getFollowers(int userId);
 			bool isFollowing(int followerId, int followingId);
+			std::unordered_map<int, std::unordered_set<int>> getFollowersList();
 			
 	};
 
@@ -88,7 +89,7 @@ namespace twt{
 			int getId();
 			bool maxSessionsReached();
 			void createSession();
-			
+			void display();
 	};
 
 	class UsersList{
@@ -104,6 +105,9 @@ namespace twt{
 			std::string getUsername(int userId);
 			void removeUser(int userId);
 			int createSession(std::string username);
+
+			std::unordered_map<int, UserInfo> getUserListInfo();	
+			twt::UserInfo getUser(int id);
 			
 	};
 

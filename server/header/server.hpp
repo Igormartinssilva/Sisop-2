@@ -21,8 +21,11 @@ class UDPServer {
 public:
     UDPServer(int port);
     ~UDPServer();
-    void start();
+    void start(); 
 
+    void displayUserList();
+
+    std::unordered_map<int, twt::UserInfo> getUsersList();
 private:
     void handlePackets();
     void processPacket();
