@@ -69,6 +69,7 @@ void UDPServer::start() {
                 break;
             }
             case 2: {
+                displayFollowersList();
                 pressEnterToContinue();
                 break;
             }
@@ -148,28 +149,22 @@ void UDPServer::processPacket() {
                     int followerId = payload.first;
                     std::string usernameToFollow = payload.second;
 
-                    //codigo do igor para follow                 
-                    // Check if the username exists and get its ID
-                    int followeeId = usersList.getUserId(usernameToFollow);
-                    if (followeeId != -1) {
-                        // Check if the follower is not already following the user
-                        if (!followers.isFollowing(followerId, followeeId)) {
-                            // Perform the follow operation
-                            followers.follow(followerId, followeeId);
+            
+                    int follewedId = usersList.getUserId(usernameToFollow);
+                    if (follewedId == -1) {  // User not found
+                        returnMessage = "User not found. Unable to follow.\n";
 
-                            // Return a success message
-                            returnMessage = "Follow request received 1\nFollower ID: " + std::to_string(followerId) +
-                                            "\nUsername: " + usernameToFollow + "\nFollow successful\n";
-                        } else {
-                            // Return a message indicating that the follower is already following the user
-                            returnMessage = "Follow request received 2\nFollower ID: " + std::to_string(followerId) +
-                                            "\nUsername: " + usernameToFollow + "\nAlready following\n";
-                        }
+                    } else if (followerId == follewedId) { // User cannot follow himself
+                        returnMessage = "You cannot follow yourself. Try following someone else.\n";
+
+                    } else if (followers.isFollowing(followerId, follewedId)) { // User already following
+                        returnMessage = "You are already following " + usernameToFollow + ".\n";
+
                     } else {
-                        // Return a message indicating that the username does not exist
-                        returnMessage = "Follow request received 3\nFollower ID: " + std::to_string(followerId) +
-                                        "\nUsername: " + usernameToFollow + "\nUser not found\n";
+                        followers.follow(followerId, follewedId);
+                        returnMessage = "You are now following " + usernameToFollow + ".\n";
                     }
+                    
                     sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
                     break;
                 }
@@ -298,6 +293,26 @@ void UDPServer::displayUserList() {
     for (auto user : this->getUsersList())
         user.second.display();
     }
+
+void UDPServer::displayFollowersList() {
+    std::cout << "\033[1;36mFollowers List:\033[0m\n";
+    for (auto user : this->followers.getFollowersList()) {
+        if(!this->followers.getFollowers(user.first).empty()){
+            std::cout << "User \033[1;33m" << usersList.getUsername(user.first) << "\033[0m followers: ";
+            for (auto follower : user.second)
+                std::cout << "\033[1;32m" << usersList.getUsername(follower) << " \033[0m";
+            std::cout << std::endl;
+        }
+    }
+
+    std::unordered_map<int, twt::UserInfo> allUsers = this->getUsersList();
+    for (const auto& user : allUsers) {
+        if (this->followers.getFollowers(user.first).empty()) {
+            std::cout << "User \033[1;33m" << usersList.getUsername(user.first) << "\033[0m has no followers\n";
+        }
+    }
+
+}
 
 int main() {
     UDPServer udpServer(PORT);

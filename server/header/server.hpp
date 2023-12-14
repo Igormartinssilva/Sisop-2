@@ -24,6 +24,7 @@ public:
     void start(); 
 
     void displayUserList();
+    void displayFollowersList();
 
     std::unordered_map<int, twt::UserInfo> getUsersList();
 private:
@@ -31,7 +32,7 @@ private:
     void processPacket();
     void processMessages();
     void processLogin();
-    
+        
     void handleLogout(const sockaddr_in& clientAddress, int id);
     
     
