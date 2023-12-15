@@ -21,6 +21,33 @@ UDPServer::~UDPServer() {
     close(serverSocket);
 }
 
+constexpr char RED[] = "\033[1;31m";
+constexpr char GREEN[] = "\033[1;32m";
+constexpr char YELLOW[] = "\033[1;33m";
+constexpr char BLUE[] = "\033[1;34m";
+constexpr char RESET[] = "\033[0m";
+void printMenu() {
+    std::cout << BLUE << ">>-- Welcome to Y --<<" << RESET << std::endl << std::endl; 
+    std::cout << RED << "1. " << RESET << "Display User List\n";
+    std::cout << RED << "2. " << RESET << "Display Followers List\n";
+    std::cout << RED << "3. " << RESET << "Exit\n";
+    std::cout << BLUE << "Choose an option: " << RESET;
+}
+
+void clearScreen() {
+#ifdef _WIN32
+    std::system("cls");
+#else
+    std::system("clear");
+#endif
+}
+
+void pressEnterToContinue() {
+    std::cout << YELLOW << "\n[Press Enter to Continue]" << RESET;
+    std::cin.ignore(); // Wait for Enter key press
+}
+
+
 void UDPServer::start() {
     std::cout << "Server listening on port " << PORT << "...\n";
 
@@ -31,7 +58,34 @@ void UDPServer::start() {
     std::thread processLoginThread(&UDPServer::processLogin, this);
 
     while (running) {
-        // Processamento adicional pode ser feito aqui
+        int choice;
+        clearScreen();
+        printMenu();
+        std::cin >> choice;
+        std::cin.ignore(); // Consume newline character
+
+        switch (choice) {
+            case 1: {
+                displayUserList();
+                pressEnterToContinue();
+                break;
+            }
+            case 2: {
+                displayFollowersList();
+                pressEnterToContinue();
+                break;
+            }
+            case 3: {
+                std::cout << "Exiting the application.\n";
+                pressEnterToContinue();
+                running = false;
+                break;
+            }
+            default:
+                std::cout << "Invalid choice. Please try again.\n";
+                std::cin.ignore();
+                pressEnterToContinue();
+        }
     }
 
     processRequestsThread.join();
@@ -87,7 +141,7 @@ void UDPServer::processPacket() {
             switch (pack.type) {
                 case twt::PacketType::Mensagem: {
                     std::pair<int, std::string> payload = twt::deserializeMessagePayload(packet);
-                    messageBuffer.push({{"", payload.first}, payload.second});
+                    messageBuffer.push({{usersList.getUsername(payload.first), payload.first}, payload.second});
                     returnMessage = "Message request received\nSender ID: " + std::to_string(payload.first) + "\nMessage: " + payload.second + "\n";
                     sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
                     break;
@@ -97,31 +151,25 @@ void UDPServer::processPacket() {
                     int followerId = payload.first;
                     std::string usernameToFollow = payload.second;
 
-                    //codigo do igor para follow                 
-                    // Check if the username exists and get its ID
-                    int followeeId = usersList.getUserId(usernameToFollow);
-                    if (followeeId != -1) {
-                        // Check if the follower is not already following the user
-                        if (!followers.isFollowing(followerId, followeeId)) {
-                            // Perform the follow operation
-                            followers.follow(followerId, followeeId);
-                            std::vector<twt::UserInfo> users_vector;
-                            users_vector = usersList.storageMap();
-                            write_file(database_name, users_vector);
+            
+                    int follewedId = usersList.getUserId(usernameToFollow);
+                    if (follewedId == -1) {  // User not found
+                        returnMessage = "User not found. Unable to follow.\n";
 
-                            // Return a success message
-                            returnMessage = "Follow request received 1\nFollower ID: " + std::to_string(followerId) +
-                                            "\nUsername: " + usernameToFollow + "\nFollow successful\n";
-                        } else {
-                            // Return a message indicating that the follower is already following the user
-                            returnMessage = "Follow request received 2\nFollower ID: " + std::to_string(followerId) +
-                                            "\nUsername: " + usernameToFollow + "\nAlready following\n";
-                        }
+                    } else if (followerId == follewedId) { // User cannot follow himself
+                        returnMessage = "You cannot follow yourself. Try following someone else.\n";
+
+                    } else if (followers.isFollowing(followerId, follewedId)) { // User already following
+                        returnMessage = "You are already following " + usernameToFollow + ".\n";
+
                     } else {
-                        // Return a message indicating that the username does not exist
-                        returnMessage = "Follow request received 3\nFollower ID: " + std::to_string(followerId) +
-                                        "\nUsername: " + usernameToFollow + "\nUser not found\n";
+                        followers.follow(followerId, follewedId);
+                        std::vector<twt::UserInfo> users_vector;
+                        users_vector = usersList.storageMap();
+                        write_file(database_name, users_vector);
+                        returnMessage = "You are now following " + usernameToFollow + ".\n";
                     }
+                    
                     sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
                     break;
                 }
@@ -134,7 +182,7 @@ void UDPServer::processPacket() {
                 case twt::PacketType::Exit: {
                     int accountId = twt::deserializeExitPayload(packet);
                     handleLogout(clientAddress, accountId);
-                    returnMessage = "Exit request received\nUserId: " + std::to_string(accountId) + "\n";
+                    returnMessage = "\n> Exit request received\nUserId: " + std::to_string(accountId) + "\n";
                     std::cout << returnMessage;
                     sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
 
@@ -175,7 +223,7 @@ void UDPServer::processLogin() {
             sockaddr_in clientAddress = pkt.first;
             std::string username = pkt.second;
 
-            std::cout << "username: " << username << std::endl;
+            // std::cout << "username: " << username << std::endl;
 
             int id = usersList.createSession(username);
             
@@ -206,11 +254,10 @@ void UDPServer::processMessages(){
             twt::Message msg = messageBuffer.front();
             std::cout << msg.sender.userId << std::endl;
             std::unordered_set<int> userFollowers = this->followers.getFollowers(msg.sender.userId);
-            std::cout << "Lista de followers de " << msg.sender.userId << "-" << msg.sender.username << ": ";
+            std::cout << "Lista de followers de " << msg.sender.userId << " - " << msg.sender.username << ": ";
             for (auto i : userFollowers) std::cout << i << ", ";
             std::cout << std::endl;
             for (auto f : userFollowers){
-                std::cout << "entrou na lista de followers" << msg.content << std::endl;
                 userMessageBuffer[f].push(msg);
                 if (!connectedUsers[f].empty()){
                     broadcastMessage(f);
@@ -224,19 +271,53 @@ void UDPServer::processMessages(){
 }
 
 void UDPServer::broadcastMessage(int receiverId) {
-    std::lock_guard<std::mutex> lock(mutex);
-    std::cout << "Chegou (diferente do santos)" << receiverId << std::endl;
     while (!userMessageBuffer[receiverId].empty()){ 
         twt::Message message = userMessageBuffer[receiverId].front();
         for (const sockaddr_in& userAddr : connectedUsers[receiverId]){
-            std::cout << "Sending message: " << message.content.c_str() << " to user " << std::to_string(receiverId) << "from user " << message.sender.username << " (id " << message.sender.userId << ")" << std::endl;
-            sendto(serverSocket, message.content.c_str(), message.content.length(), 0, (struct sockaddr*)&userAddr, sizeof(userAddr));
+            std::cout << "\n> Sending message: \"" << message.content.c_str() << 
+                "\" to user @"<< usersList.getUsername(receiverId) << "(id " << std::to_string(receiverId) << ")" <<
+                " from user @" << message.sender.username << " (id " << message.sender.userId << ")" << std::endl;
+            std::string str(
+                message.sender.username + ',' + 
+                std::to_string(message.sender.userId) + ',' +
+                message.content
+            );
+            sendto(serverSocket, str.c_str(), str.length(), 0, (struct sockaddr*)&userAddr, sizeof(userAddr));
         }
         userMessageBuffer[receiverId].pop();
     }
 }
 
 
+std::unordered_map<int, twt::UserInfo> UDPServer::getUsersList() {
+    return this->usersList.getUserListInfo();
+}
+
+void UDPServer::displayUserList() {
+    std::cout << "User List:\n";
+    for (auto user : this->getUsersList())
+        user.second.display();
+    }
+
+void UDPServer::displayFollowersList() {
+    std::cout << "\033[1;36mFollowers List:\033[0m\n";
+    for (auto user : this->followers.getFollowersList()) {
+        if(!this->followers.getFollowers(user.first).empty()){
+            std::cout << "User \033[1;33m" << usersList.getUsername(user.first) << "\033[0m followers: ";
+            for (auto follower : user.second)
+                std::cout << "\033[1;32m" << usersList.getUsername(follower) << " \033[0m";
+            std::cout << std::endl;
+        }
+    }
+
+    std::unordered_map<int, twt::UserInfo> allUsers = this->getUsersList();
+    for (const auto& user : allUsers) {
+        if (this->followers.getFollowers(user.first).empty()) {
+            std::cout << "User \033[1;33m" << usersList.getUsername(user.first) << "\033[0m has no followers\n";
+        }
+    }
+
+}
 
 int main() {
     UDPServer udpServer(PORT);

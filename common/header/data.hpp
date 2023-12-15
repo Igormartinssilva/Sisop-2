@@ -11,6 +11,7 @@
 #include <queue>
 #include <cstdint>
 #include <sstream>
+#include <semaphore.h>
 #include "../../asserts/constraints.hpp"
 
 namespace twt{
@@ -72,6 +73,7 @@ namespace twt{
 			void follow(int followerId, int followingId);
 			std::unordered_set<int> getFollowers(int userId);
 			bool isFollowing(int followerId, int followingId);
+			std::unordered_map<int, std::unordered_set<int>> getFollowersList();
 			
 	};
 
@@ -90,7 +92,7 @@ namespace twt{
 			int getId();
 			bool maxSessionsReached();
 			void createSession();
-			
+			void display();
 	};
 
 	class UsersList{
@@ -107,6 +109,10 @@ namespace twt{
 			void removeUser(int userId);
 			int createSession(std::string username);
 
+			std::unordered_map<int, UserInfo> getUserListInfo();	
+			twt::UserInfo getUser(int id);
+			
+
 			std::vector<twt::UserInfo> storageMap();
 			void loadMap(std::vector<twt::UserInfo>& users_list);
 	};
@@ -115,6 +121,10 @@ namespace twt{
 		User sender;
 		std::string content;
 	};
+
+	extern sem_t sessionSemaphore;
+	void initializeSemaphores();
+    void destroySemaphores();
 }
 
 #endif

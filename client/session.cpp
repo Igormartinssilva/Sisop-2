@@ -10,7 +10,7 @@ Session::Session() : client() {
         std::cout << "ip found in file, ip: " << buffer << std::endl;
         client.setServer(buffer.c_str());
     } else {
-        client.setServer("172.17.0.1"); //143.54.50.200 (dick) 143.54.48.125(luis) 172.25.219.12(igor)
+        client.setServer("143.54.53.113"); //143.54.50.200 (dick) 143.54.48.125(luis) 172.25.219.12(igor) 143.54.53.113 (carlos)
     }
 }
 
@@ -63,10 +63,17 @@ void Session::processReceiving() {
         memset(buffer, 0, BUFFER_SIZE);
 
         int bytesRead = recvfrom(clientSocket, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&serverAddress, &serverSize);
-        if (bytesRead > 0) {            
+        if (bytesRead > 0) 
+        {            
             std::lock_guard<std::mutex> lock(mutex);
             receivingBuffer.push({serverAddress, buffer});
-
+            std::string str(buffer);
+            int index = str.find(',');
+            std::string username = str.substr(0, index);
+            int newIndex = str.find(',', index+1);
+            int userId = atoi(str.substr(index+1, newIndex).c_str());
+            std::string content = str.substr(newIndex+1);
+            notificationBuffer.push({{username, userId}, content});
         }
     }
 }
@@ -88,5 +95,14 @@ void Session::processBuffer() {
         } else {
             sleep(0.1);
         }
+    }
+}
+
+void Session::processNotifBuffer() {
+    while(!notificationBuffer.empty()) {
+        twt::Message msg = notificationBuffer.front();
+        std::cout << "New Message from " << msg.sender.username << ": " << std::endl;
+        std::cout << msg.content << std::endl;
+        notificationBuffer.pop();
     }
 }

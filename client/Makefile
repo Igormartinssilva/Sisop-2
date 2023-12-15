@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -std=c++11 -Wall
+CFLAGS = -std=c++11 -Wall -pthread
 BIN_DIR = ../bin
 HEADER_DIR = ../header
 COMMON_DIR = ../common
