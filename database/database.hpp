@@ -20,6 +20,8 @@ std::string format_data( twt::UserInfo& user);
 
 void write_file( std::string& filename,  std::vector<twt::UserInfo>& users);
 
+int findMaxUserId( std::vector<twt::UserInfo>& userVector);
+
 //Falta implementar get_next_id, salvar e carregar da database
 
 #endif // DATABASE_HPP

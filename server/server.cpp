@@ -50,7 +50,7 @@ void pressEnterToContinue() {
 
 void UDPServer::start() {
     std::cout << "Server listening on port " << PORT << "...\n";
-
+    loadDataBase();
     running = true;
     std::thread processRequestsThread(&UDPServer::handlePackets, this);
     std::thread processPacketsThread(&UDPServer::processPacket, this);
@@ -164,9 +164,7 @@ void UDPServer::processPacket() {
 
                     } else {
                         followers.follow(followerId, follewedId);
-                        std::vector<twt::UserInfo> users_vector;
-                        users_vector = usersList.storageMap();
-                        write_file(database_name, users_vector);
+                        saveDataBase();
                         returnMessage = "You are now following " + usernameToFollow + ".\n";
                     }
                     
@@ -235,6 +233,7 @@ void UDPServer::processLogin() {
             else{
                 // Enviar resposta de sucesso
                 std::string replyMessage = "LOGIN_SUCCESS " + std::to_string(id);
+                saveDataBase();
                 connectedUsers[id].push_back(clientAddress);
                 //broadcastMessage(id);
                 sendto(serverSocket, replyMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
@@ -318,6 +317,20 @@ void UDPServer::displayFollowersList() {
     }
 
 }
+
+void UDPServer::saveDataBase(){
+    std::vector<twt::UserInfo> users_vector;
+    users_vector = usersList.storageMap();
+    write_file(database_name, users_vector);
+}
+
+void UDPServer::loadDataBase(){
+    std::vector<twt::UserInfo> users_vector;
+    users_vector = read_file(database_name);
+    usersList.loadMap(users_vector);
+    usersList.setNextId(findMaxUserId(users_vector)+1);
+}
+
 
 int main() {
     UDPServer udpServer(PORT);

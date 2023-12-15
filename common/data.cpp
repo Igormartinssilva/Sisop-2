@@ -200,6 +200,10 @@ int twt::UsersList::appendUser(std::string username){
     this->nextId ++;
     return returnId;
 }
+
+void twt::UsersList::setNextId(int nxtId){
+    this->nextId = nxtId;
+}
 /*
 void twt::UsersList::logout(int userId){
     users[userId].logout();

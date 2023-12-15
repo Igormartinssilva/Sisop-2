@@ -101,6 +101,7 @@ namespace twt{
 			std::unordered_map<int, UserInfo> users;
 			std::unordered_map<std::string, int> usersId;
 		public:
+			void setNextId(int nxtId);
 			UsersList();
 			void logout(int userId);
 			int getUserId(std::string username);

@@ -34,6 +34,8 @@ public:
 private:
     void handlePackets();
     void processPacket();
+    void saveDataBase();
+    void loadDataBase();
     void processMessages();
     void processLogin();
         
@@ -53,7 +55,7 @@ private:
     std::queue<std::pair<const sockaddr_in&, const std::string&>> loginBuffer;
     
 
-    void saveDataBase();
+    
     
     std::mutex mutex;
     bool running;
