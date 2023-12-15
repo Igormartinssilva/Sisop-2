@@ -61,8 +61,9 @@ std::vector<twt::UserInfo> read_file( std::string& filename) {
 
 std::string format_data(twt::UserInfo& user) {
     std::ostringstream formatted_data;
-    user.getFollowers();
-    formatted_data << user.getUsername() << ";" << unorderedSetParaString(user.getFollowers()) << ";" << user.getId();
+    std::unordered_set<int> user_followers;
+    user_followers = user.getFollowers();
+    formatted_data << user.getUsername() << ";" << unorderedSetParaString(user_followers) << ";" << user.getId();
     return formatted_data.str();
 }
 

@@ -25,6 +25,7 @@ public:
     void start();
     twt::Followers followers;
     twt::UsersList usersList;
+    std::string database_name = "database.txt";
 
 private:
     void handlePackets();
@@ -45,6 +46,7 @@ private:
     std::unordered_map<int, std::queue<twt::Message>> userMessageBuffer;  // User ID -> Queue of stored messages
     std::queue<twt::Message> messageBuffer; // Messages of the tr
     std::queue<std::pair<const sockaddr_in&, const std::string&>> loginBuffer;
+    
 
     void saveDataBase();
     
