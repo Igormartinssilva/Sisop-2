@@ -48,13 +48,13 @@ std::vector<twt::UserInfo> read_file( std::string& filename) {
         std::getline(ss, followers_str, ';');
         ss >> id;
 
+        
         std::unordered_set<int> followers = stringParaUnorderedSet(followers_str);
 
         // Criar UserInfo e adicionar ao vetor
         usuarios.push_back(twt::UserInfo(id, username, followers));
     }
     file.close();
-
     return usuarios;
 }
 

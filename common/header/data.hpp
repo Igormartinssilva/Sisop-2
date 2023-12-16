@@ -27,18 +27,24 @@ namespace twt{
 		Mensagem = 0,
 		Login,
 		Follow,
-		Exit
+		Exit,
+		Ping
 	};
 
     // Serialization and Deserialization functions for different payloads
     std::vector<char> serializeMessagePayload(int senderId, const std::string& message);
     std::pair<int, std::string> deserializeMessagePayload(const std::vector<char>& data);
 
+
+
     std::vector<char> serializeFollowPayload(int followerId, const std::string& username);
     std::pair<int, std::string> deserializeFollowPayload(const std::vector<char>& data);
 
     std::vector<char> serializeExitPayload(int accountId);
     int deserializeExitPayload(const std::vector<char>& data);
+
+	std::vector<char> serializePingPayload(int accountId);
+    int deserializePingPayload(const std::vector<char>& data);
 
     std::vector<char> serializeLoginPayload(const std::string& username);
     std::string deserializeLoginPayload(const std::vector<char>& data);

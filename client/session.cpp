@@ -91,6 +91,8 @@ void Session::processBuffer() {
                     std::cout << PURPLE << "Server Message: " << RESET << packet.substr(8) << std::endl;
                 }
                 ackReceived = true;
+            } else if (packet.substr(0, 3) == "PNG") {
+                client.sendPacket(twt::Ping, twt::serializePingPayload(user.userId));
             } else {
                 messageBuffer.push(packet);
             }

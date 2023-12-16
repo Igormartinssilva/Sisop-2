@@ -40,7 +40,8 @@ private:
     void loadDataBase();
     void processMessages();
     void processLogin();
-        
+    void processPing();
+    void processPingErase();
     void handleLogout(const sockaddr_in& clientAddress, int id);
     
     void broadcastMessage(int receiverId);
@@ -53,12 +54,15 @@ private:
     
     std::unordered_map<int, std::queue<twt::Message>> userMessageBuffer;  // User ID -> Queue of stored messages
     std::queue<twt::Message> messageBuffer; // Messages of the tr
+    std::queue<std::pair<std::pair<int, std::pair<in_addr_t, in_port_t>>, sockaddr_in>> pingQueue;
     std::queue<std::pair<const sockaddr_in&, const std::string&>> loginBuffer;
+    std::map<std::pair<int, std::pair<in_addr_t, in_port_t>>, sockaddr_in> pingSet;
     
     std::mutex mutexProcBuff;
     std::mutex mutexUsers;
     std::mutex mutexMsgBuff;
     std::mutex mutexLogBuff;
+    std::mutex mutexLogPing;
     bool running;
 };
 

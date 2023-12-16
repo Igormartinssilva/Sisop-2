@@ -44,6 +44,8 @@ void UDPServer::start() {
     std::thread processPacketsThread(&UDPServer::processPacket, this);
     std::thread processMessageThread(&UDPServer::processMessages, this);
     std::thread processLoginThread(&UDPServer::processLogin, this);
+    std::thread processPingThread(&UDPServer::processPing, this);
+    std::thread processPingEraseThread(&UDPServer::processPingErase, this);
 
     while (running) {
         int choice;
@@ -73,12 +75,13 @@ void UDPServer::start() {
                 std::cout << "Enter the passcode:\n";
                 std::string passcode;
                 std::cin >> passcode;
-                if (passcode.compare("reinoredondo") == 0){
+                if (passcode.compare("taylorswift") == 0){
                     system("rm database.txt");
                     std::cout << "Database Successfully removed" << std::endl;
                 } else {
                     std::cout << "Incorrect Passcode" << std::endl;
                 }
+                std::cin.ignore();
                 pressEnterToContinue();
                 break;
             }
@@ -90,6 +93,8 @@ void UDPServer::start() {
             }
             case 6: {
                 loadDataBase();
+                std::cout << "Database Load successfully" << std::endl;
+                pressEnterToContinue();
                 break;
             }
             default:
@@ -183,6 +188,14 @@ void UDPServer::processPacket() {
 
                     break;
                 }
+                case twt::PacketType::Ping: {
+                    int accountId = twt::deserializePingPayload(packet);
+                    returnMessage = "ACK_PNG,Ping ack received\n";
+                    std::cout << returnMessage;
+                    pingQueue.push({{accountId, {clientAddress.sin_addr.s_addr, clientAddress.sin_port}}, clientAddress});
+                    
+                    break;
+                }
             }
         } else {
             
@@ -206,6 +219,9 @@ void UDPServer::handleLogout(const sockaddr_in& clientAddress, int id) {
     // Check if the session was found before erasing
     if (pos != sessions.end()) {
         sessions.erase(pos);
+        std::cout << "Closing user session: " << PURPLE << id << RESET << std::endl;
+        std::string clientIPAddress = inet_ntoa(clientAddress.sin_addr);
+        std::cout << "Endereço IP do cliente: " << PURPLE << clientIPAddress << RESET << std::endl;
     }
 }
 
@@ -281,6 +297,38 @@ void UDPServer::broadcastMessage(int receiverId) {
     }
 }
 
+void UDPServer::processPing(){
+    while(running){
+        std::this_thread::sleep_for(std::chrono::seconds(5));
+        for (auto user : connectedUsers){
+            for (auto addr : user.second){
+                std::string str("PNG");
+                int n = sendto(serverSocket, str.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&addr, sizeof(addr));
+                std::cout << "Sending ping to user " << usersList.getUsername(user.first) << " (port " << addr.sin_port << ")" << std::endl;
+                if (n > 0){
+                    std::lock_guard<std::mutex> lock(mutexLogPing); //prdutor
+                    pingSet[{user.first, {addr.sin_addr.s_addr, addr.sin_port}}] = addr;
+                }
+            }
+        }
+        
+        std::this_thread::sleep_for(std::chrono::seconds(10));
+        std::lock_guard<std::mutex> lock(mutexLogPing);
+        for (auto user : pingSet){
+            handleLogout(user.second, user.first.first);
+        }
+    }
+}
+
+void UDPServer::processPingErase(){
+    while(running){
+        std::lock_guard<std::mutex> lock(mutexLogPing);
+        while (!pingQueue.empty()){
+            pingSet.erase(pingQueue.front().first);
+            pingQueue.pop();
+        }
+    }
+}
 
 std::unordered_map<int, twt::UserInfo> UDPServer::getUsersList() {
     return this->usersList.getUserListInfo();

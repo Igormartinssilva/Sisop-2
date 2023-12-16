@@ -113,6 +113,30 @@ namespace twt {
         return username;
     }
 
+    std::vector<char> serializePingPayload(int accountId) {
+        assert(BUFFER_SIZE >= 6); // Ensure there is enough space for the header and payload
+
+        std::vector<char> serializedData(BUFFER_SIZE);
+
+        // Serialize exit payload
+        uint16_t accountIdN = htons(accountId);
+        std::memcpy(serializedData.data(), &accountIdN, sizeof(accountIdN));
+
+        return serializedData;
+    }
+
+    int deserializePingPayload(const std::vector<char>& data) {
+        assert(data.size() >= 6); // Ensure there is enough data to deserialize the header and payload
+
+        Packet packet = deserializePacket(data);
+
+        int accountId;
+        std::memcpy(&accountId, packet.payload, sizeof(accountId));
+        accountId = ntohs(accountId);
+
+        return accountId;
+    }
+
     std::vector<char> serializePacket(const Packet &pkg) {
         assert(BUFFER_SIZE >= 6); // Ensure there is enough space for the header
 
@@ -253,8 +277,7 @@ std::vector<twt::UserInfo> twt::UsersList::storageMap() {
 }
 
 void twt::UsersList:: loadMap(std::vector<twt::UserInfo>& users_list) {
-    for (auto& user : users_list) 
-    {
+    for (auto& user : users_list) {
         this->users[user.getId()] = user;  // Usa getId() como chave e insere no mapa
         this->usersId[user.getUsername()] = user.getId();
     }
@@ -275,6 +298,7 @@ twt::UserInfo::UserInfo(int userId, std::string username){
 twt::UserInfo::UserInfo(int userId, std::string username, std::unordered_set<int> followers){
     this->user.username = username;
     this->user.userId = userId;
+    this->followers = followers;
     this->activeSessions = 0;
 }
 
