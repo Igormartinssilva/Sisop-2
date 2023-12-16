@@ -47,20 +47,6 @@ namespace twt{
 	std::vector<char> serializePacket(const twt::Packet &pkg);
 	twt::Packet deserializePacket(const std::vector<char> &data);
 
-	struct ServerNotification{
-		int notificationId;
-		int userPostId;
-		char message;
-		int messageSize;
-		int followersToSend;
-	};
-
-	struct UserNotification{
-		int userPostId;
-		int userReceiverId;
-		int notificationId;
-	};
-
 	struct User{
 		std::string username;
 		int userId;
@@ -111,8 +97,8 @@ namespace twt{
 			int createSession(std::string username);
 
 			std::unordered_map<int, UserInfo> getUserListInfo();	
-			twt::UserInfo getUser(int id);
-			
+			twt::UserInfo& getUser(int id);
+			std::vector<int> getUserIds();
 
 			std::vector<twt::UserInfo> storageMap();
 			void loadMap(std::vector<twt::UserInfo>& users_list);

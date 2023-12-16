@@ -3,6 +3,7 @@
 #include "header/session.hpp"
 #include <cstdlib> // for std::system
 #include "../common/header/data.hpp"
+#include "../common/header/utils.hpp"
 #include <semaphore.h>
 using namespace std;
 // ANSI color codes
@@ -10,10 +11,10 @@ constexpr char RED[] = "\033[1;31m";
 constexpr char GREEN[] = "\033[1;32m";
 constexpr char YELLOW[] = "\033[1;33m";
 constexpr char BLUE[] = "\033[1;34m";
+constexpr char PURPLE[] = "\033[1;35m";
 constexpr char RESET[] = "\033[0m";
 
 void clearScreen() {
-    return;
     // Clear screen command based on platform
 #ifdef _WIN32
     std::system("cls");
@@ -27,13 +28,19 @@ void pressEnterToContinue() {
     std::cin.ignore(); // Wait for Enter key press
 }
 
-void printMenu() {
-    cout << BLUE << ">>-- Welcome to Y --<<" << RESET << std::endl << std::endl; 
-    cout << RED << "1. " << RESET << "Send Message\n";
-    cout << RED << "2. " << RESET << "Follow User\n";
-    cout << RED << "3. " << RESET << "List Messages\n";
-    cout << RED << "4. " << RESET << "Exit\n";
+void printMenu(std::string username) {
+    cout << BLUE << ">>-- Welcome to Y --<<" << RESET << std::endl << std::endl;
+    cout << "Hello, " << BLUE << username << RESET << " (@" << username << ")!" << std::endl << std::endl;
+    cout << PURPLE << "1. " << RESET << "Send Message\n";
+    cout << PURPLE << "2. " << RESET << "Follow User\n";
+    cout << PURPLE << "3. " << RESET << "List Messages\n";
+    cout << PURPLE << "4. " << RESET << "Exit\n";
     cout << BLUE <<"Choose an option: " << RESET;
+}
+
+void printMenuLoggedOut() {
+    cout << BLUE << ">>-- Welcome to Y --<<" << RESET << std::endl << std::endl;
+    cout << BLUE << "Insert your username: " << RESET;
 }
 
 int main(int argc, char **argv) {
@@ -48,11 +55,18 @@ int main(int argc, char **argv) {
         cerr << "you must inform IP"<< endl;
     
     clearScreen();
-    cout << BLUE << ">>-- Welcome to Y --<<" << RESET << endl;
-
     cout << "Connecting to server " << RED << argv[1] << RESET << " at port " << RED << PORT << RESET << "..." << endl;
-    cout << BLUE << "Insert your username: " << RESET;
+    printMenuLoggedOut();
     std::getline(std::cin, username);
+    while (!nameConsistency(username)) {
+        cout << endl;
+        cout << "Nome de usuario deve ter entre 4 e 20 caracteres.\n";
+        cout << "Nome de usuario deve conter apenas letras e digitos\n";
+        pressEnterToContinue();
+        clearScreen();
+        printMenuLoggedOut();
+        std::getline(std::cin, username);
+    }
     session.sendLogin(username);
     if (!session.isLogged())
         return 0;
@@ -63,7 +77,7 @@ int main(int argc, char **argv) {
     bool running = true;
     while (running) {
         clearScreen();
-        printMenu();
+        printMenu(username);
         std::cin >> choice;
         std::cin.ignore(); // Consume newline character
 

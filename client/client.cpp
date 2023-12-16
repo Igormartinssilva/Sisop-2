@@ -47,9 +47,6 @@ int Client::sendPacket(twt::PacketType type, const std::vector<char>& payload) {
     inet_ntop(AF_INET, &serv_addr.sin_addr, buffer, sizeof(buffer));
     
     n = sendto(sockfd, &bits, BUFFER_SIZE, 0, (const struct sockaddr *)&serv_addr, sizeof(serv_addr));
-    std::cout << "serv_addr: " << buffer << std::endl;
-    std::cout << "n: " << n << std::endl;
-    std::cout << "sockfd: " << sockfd << std::endl;
     
     if (n < 0) {
         perror("ERROR in sendto");

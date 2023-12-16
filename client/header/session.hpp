@@ -21,6 +21,7 @@ private:
     void processReceiving();
     std::string getMessageBuffer();
     void waitForAck();
+    twt::Message decodeMessage(std::string msg);
     
 
 public:

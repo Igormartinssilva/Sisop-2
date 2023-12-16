@@ -33,6 +33,8 @@ public:
     std::unordered_map<int, twt::UserInfo> getUsersList();
 private:
     void handlePackets();
+    void loadFollowersIntoUsersList();
+    void saveFollowersFromUsersList();
     void processPacket();
     void saveDataBase();
     void loadDataBase();

@@ -224,44 +224,21 @@ void twt::UsersList::removeUser(int userId){
     users.erase(userId);
 }
 
-twt::UserInfo twt::UsersList::getUser(int id){
-    return this->users[id];
-}
+std::vector<int> twt::UsersList::getUserIds() {
+        std::vector<int> userIds;
+        for (const auto& pair : users) {
+            userIds.push_back(pair.first);
+        }
+        return userIds;
+    }
+
+twt::UserInfo& twt::UsersList::getUser(int userId) {
+        return users[userId];
+    }
 
 std::unordered_map<int, twt::UserInfo> twt::UsersList::getUserListInfo(){
     return this->users;
 }
-
-/*
-int twt::UsersList::createSession(std::string username){
-     int id = getUserId(username);
-
-        if (id == -1) {
-            id = appendUser(username);
-            std::cout << "User created: " << username << " with ID: " << id << std::endl;
-            users[id].createSession();
-            std::cout << "Creating session: " << username << " with ID: " << id << std::endl;
-            return id;
-        } else {
-            // Agora, antes de criar uma nova sessão, esperamos o semáforo
-            sem_wait(&twt::sessionSemaphore);
-
-            if (!users[id].maxSessionsReached()) {
-                users[id].createSession();
-                std::cout << "Creating session: " << username << " with ID: " << id << std::endl;
-                return id;
-            } else {
-                std::cout << "User " << username << " cannot log in. Max session reached" << std::endl;
-
-                // Se não for possível criar uma sessão, liberamos o semáforo
-                sem_post(&twt::sessionSemaphore);
-
-                return -1;
-            }
-        }
-
-        return id;
-}*/
 
 std::vector<twt::UserInfo> twt::UsersList::storageMap() {
     std::vector<twt::UserInfo> result;
@@ -279,7 +256,6 @@ void twt::UsersList::loadMap(std::vector<twt::UserInfo>& users_list) {
         this->users[user.getId()] = user;  // Usa getId() como chave e insere no mapa
     }
 }
-
 
 twt::UserInfo::UserInfo(){
     this->user.username = "";
@@ -341,7 +317,7 @@ void twt::UserInfo::display() {
     // Função para criar uma sessão para um usuário
     int twt:: UsersList::createSession(std::string username) {
         int id = getUserId(username);
-
+        std::cout << "ID inside create sesssion: " << username << ", " << std::to_string(id) << std::endl;
         if (id == -1) {
             id = appendUser(username);
             std::cout << "\n> User created: " << username << " with ID: " << id << std::endl;

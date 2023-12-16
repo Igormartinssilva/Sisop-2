@@ -160,7 +160,8 @@ void UDPServer::processPacket() {
                         saveDataBase();
                         returnMessage = std::string("ACK_FLW,You are now following ") + usernameToFollow +  std::string(".\n");
                     }
-                    
+
+                    std::cout << returnMessage << std::endl;
                     sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
                     break;
                 }
@@ -307,7 +308,26 @@ void UDPServer::displayFollowersList() {
 
 void UDPServer::saveDataBase(){
     std::vector<twt::UserInfo> users_vector;
+    loadFollowersIntoUsersList();
     users_vector = usersList.storageMap();
+    // Para cada userId na usersList
+    for (int userId : usersList.getUserIds()) {
+        // Obter o nome de usuário para o userId
+        std::string username = usersList.getUsername(userId);
+
+        // Imprimir o nome de usuário
+        std::cout << "User ID: " << userId << ", Username: " << username << std::endl;
+
+        // Obter os seguidores do usuário
+        std::unordered_set<int> followers = usersList.getUser(userId).getFollowers();
+
+        // Imprimir os seguidores do usuário
+        std::cout << "Followers: ";
+        for (int followerId : followers) {
+            std::cout << followerId << " ";
+        }
+        std::cout << std::endl;
+    }
     write_file(database_name, users_vector);
 }
 
@@ -315,6 +335,7 @@ void UDPServer::loadDataBase(){
     std::vector<twt::UserInfo> users_vector;
     users_vector = read_file(database_name);
     usersList.loadMap(users_vector);
+    saveFollowersFromUsersList();
     usersList.setNextId(findMaxUserId(users_vector)+1);
 }
 
@@ -324,4 +345,31 @@ int main() {
     udpServer.start();
 
     return 0;
+}
+
+void UDPServer::loadFollowersIntoUsersList() {
+    // Para cada userId na usersList
+    for (int userId : usersList.getUserIds()) {
+        // Obter os seguidores do userId
+        std::unordered_set<int> followerIds = followers.getFollowers(userId);
+
+        // Para cada seguidor, adicione-o à lista de seguidores do usuário correspondente na usersList
+        for (int followerId : followerIds) {
+            twt::UserInfo& userInfo = usersList.getUser(followerId);
+            userInfo.getFollowers().insert(userId);
+        }
+    }
+}
+
+void UDPServer::saveFollowersFromUsersList() {
+    // Para cada userId na usersList
+    for (int userId : usersList.getUserIds()) {
+        // Obter o UserInfo para o userId
+        twt::UserInfo& userInfo = usersList.getUser(userId);
+
+        // Para cada seguidor do usuário, adicione-o à lista de seguidores
+        for (int followerId : userInfo.getFollowers()) {
+            followers.follow(followerId, userId);
+        }
+    }
 }

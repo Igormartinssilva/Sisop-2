@@ -31,10 +31,7 @@ void Session::sendLogin(const std::string& username) {
     user.username = username;
     std::vector<char> payload = twt::serializeLoginPayload(username);
     client.sendPacket(twt::PacketType::Login, payload);
-    std::cout << "waiting for acknowledgment..." << std::endl;
-    std::cout << "user.userId (esquenta) : " << user.userId << std::endl;
     waitForAck();
-    std::cout << "user.userId (after): " << user.userId << std::endl;
 }
 
 void Session::sendFollow(const std::string& username) {
@@ -66,11 +63,19 @@ void Session::processBuffer() {
         std::string packet = client.getBuffer();
         if (strcmp(packet.c_str(), "") != 0){
             if (packet.substr(0, 3) == "ACK") {
-                std::cout << "Packet: " << packet << std::endl;
                 if (packet.substr(0, 7) == "ACK_LOG") {
                     int index = packet.find(',', 8);
                     user.userId = atoi(packet.substr(8, index).c_str());
                     logged = true;
+                }
+                else if (packet.substr(0, 7) == "ACK_FLW") {
+                    std::cout << packet.substr(8) << std::endl;
+                }
+                else if (packet.substr(0, 7) == "ACK_MSG") {
+                    std::cout << packet.substr(8) << std::endl;
+                }
+                else if (packet.substr(0, 7) == "ACK_EXT") {
+                    std::cout << packet.substr(8) << std::endl;
                 }
                 ackReceived = true;
             } else {
@@ -100,12 +105,32 @@ void Session::waitForAck() {
     ackReceived = false;
 }
 
+constexpr char RED[] = "\033[1;31m";
+constexpr char GREEN[] = "\033[1;32m";
+constexpr char YELLOW[] = "\033[1;33m";
+constexpr char BLUE[] = "\033[1;34m";
+constexpr char PURPLE[] = "\033[1;35m";
+constexpr char RESET[] = "\033[0m";
+
 void Session::printYourMessages() {
     while (true) {
         std::string message = this->getMessageBuffer();
         if (message.empty()) {
             break;
         }
-        std::cout << message << std::endl;
+        twt::Message msg = decodeMessage(message);
+        std::cout << PURPLE << msg.sender.username << RESET << " @" << msg.sender.username << RESET << ":" << std::endl;
+        std::cout << "> " << msg.content << std::endl << std::endl;
     }
+}
+
+twt::Message Session::decodeMessage(std::string str){
+    twt::Message msg;
+    int i0, i1;
+    i0 = str.find(',');
+    i1 = str.find(',', i0+1);
+    msg.sender.username = str.substr(0, i0);
+    msg.sender.userId = atoi(str.substr(i0+1, i1).c_str());
+    msg.content = str.substr(i1+1);
+    return msg;
 }
