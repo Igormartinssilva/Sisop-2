@@ -51,9 +51,9 @@ std::vector<twt::UserInfo> read_file( std::string& filename) {
         std::unordered_set<int> followers = stringParaUnorderedSet(followers_str);
 
         // Criar UserInfo e adicionar ao vetor
+        //std::cout << "pushing back user " << username << " with id " << std::to_string(id) << std::endl;
         usuarios.push_back(twt::UserInfo(id, username, followers));
     }
-
     file.close();
 
     return usuarios;

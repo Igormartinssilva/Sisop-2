@@ -27,6 +27,7 @@ private:
 public:
     Session();
     Session(std::string);
+    ~Session();
 
     void sendLogin(const std::string& username);
     void sendFollow(const std::string& username);

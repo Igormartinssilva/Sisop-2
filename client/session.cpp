@@ -23,6 +23,10 @@ Session::Session(std::string ip) : client() {
     processingThread = std::thread(&Session::processBuffer, this);
 }
 
+Session::~Session(){
+    processingThread.join();
+}
+
 bool Session::isLogged(){
     return this->logged;
 }
@@ -59,14 +63,20 @@ void Session::sendExit() {
 }
 
 void Session::processBuffer() {
-    while (true) {
+    while (running) {
         std::string packet = client.getBuffer();
         if (strcmp(packet.c_str(), "") != 0){
             if (packet.substr(0, 3) == "ACK") {
                 if (packet.substr(0, 7) == "ACK_LOG") {
                     int index = packet.find(',', 8);
                     user.userId = atoi(packet.substr(8, index).c_str());
-                    logged = true;
+                    std::cout << user.userId << std::endl;
+                    if (user.userId != -1)
+                        logged = true;
+                    else
+                        logged = false;
+                    std::cout << int(user.userId != -1) << std::endl;
+
                 }
                 else if (packet.substr(0, 7) == "ACK_FLW") {
                     std::cout << packet.substr(8) << std::endl;

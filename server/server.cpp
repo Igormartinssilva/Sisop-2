@@ -340,13 +340,6 @@ void UDPServer::loadDataBase(){
 }
 
 
-int main() {
-    UDPServer udpServer(PORT);
-    udpServer.start();
-
-    return 0;
-}
-
 void UDPServer::loadFollowersIntoUsersList() {
     // Para cada userId na usersList
     for (int userId : usersList.getUserIds()) {
@@ -372,4 +365,11 @@ void UDPServer::saveFollowersFromUsersList() {
             followers.follow(followerId, userId);
         }
     }
+}
+
+int main() {
+    UDPServer udpServer(PORT);
+    udpServer.start();
+
+    return 0;
 }

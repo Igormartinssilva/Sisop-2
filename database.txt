@@ -1,8 +1,2 @@
-koko11;;8
-kuko;;7
-cuckohj;;4
-Nuvem;;3
-cuckohj;;1
-Nuvem;;2
-koko;;5
-koko11;;6
+Luis;;4
+Mendes;;5

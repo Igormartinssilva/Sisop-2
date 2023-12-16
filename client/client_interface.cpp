@@ -40,7 +40,7 @@ void printMenu(std::string username) {
 
 void printMenuLoggedOut() {
     cout << BLUE << ">>-- Welcome to Y --<<" << RESET << std::endl << std::endl;
-    cout << BLUE << "Insert your username: " << RESET;
+    cout << BLUE << "Insert your username [deixe em branco para sair]: " << RESET;
 }
 
 int main(int argc, char **argv) {
@@ -54,22 +54,28 @@ int main(int argc, char **argv) {
     if (argc < 2)
         cerr << "you must inform IP"<< endl;
     
-    clearScreen();
-    cout << "Connecting to server " << RED << argv[1] << RESET << " at port " << RED << PORT << RESET << "..." << endl;
-    printMenuLoggedOut();
-    std::getline(std::cin, username);
-    while (!nameConsistency(username)) {
-        cout << endl;
-        cout << "Nome de usuario deve ter entre 4 e 20 caracteres.\n";
-        cout << "Nome de usuario deve conter apenas letras e digitos\n";
-        pressEnterToContinue();
+    while (!session.isLogged()){
         clearScreen();
+        cout << "Connecting to server " << RED << argv[1] << RESET << " at port " << RED << PORT << RESET << "..." << endl;
         printMenuLoggedOut();
         std::getline(std::cin, username);
+        if (username.compare("") == 0){
+            cout << "Encerrando programa..." << endl;
+            return 0;
+        }
+        while (!nameConsistency(username)) {
+            cout << endl;
+            cout << "Nome de usuario deve ter entre 4 e 20 caracteres.\n";
+            cout << "Nome de usuario deve conter apenas letras e digitos\n";
+            pressEnterToContinue();
+            clearScreen();
+            printMenuLoggedOut();
+            std::getline(std::cin, username);
+        }
+        session.sendLogin(username);
+        if (!session.isLogged())
+            cout << "Nao foi possivel fazer login. Numero maximo de sessoes por conta excedido" << endl;
     }
-    session.sendLogin(username);
-    if (!session.isLogged())
-        return 0;
     
     pressEnterToContinue();
 
@@ -107,7 +113,6 @@ int main(int argc, char **argv) {
                 session.sendExit();
                 cout << YELLOW << "Exiting the application.\n" << RESET;
                 running = false;
-                pressEnterToContinue();
                 break;
             }
             default:
