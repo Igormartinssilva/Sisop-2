@@ -3,8 +3,8 @@
 #include "header/session.hpp"
 #include <cstdlib> // for std::system
 #include "../common/header/data.hpp"
-using namespace std;
 #include <semaphore.h>
+using namespace std;
 // ANSI color codes
 constexpr char RED[] = "\033[1;31m";
 constexpr char GREEN[] = "\033[1;32m";
@@ -13,6 +13,7 @@ constexpr char BLUE[] = "\033[1;34m";
 constexpr char RESET[] = "\033[0m";
 
 void clearScreen() {
+    return;
     // Clear screen command based on platform
 #ifdef _WIN32
     std::system("cls");
@@ -52,17 +53,11 @@ int main(int argc, char **argv) {
     cout << "Connecting to server " << RED << argv[1] << RESET << " at port " << RED << PORT << RESET << "..." << endl;
     cout << BLUE << "Insert your username: " << RESET;
     std::getline(std::cin, username);
-
     session.sendLogin(username);
     if (!session.isLogged())
         return 0;
     
-    //std::thread notificationsThread(&Session::processNotifBuffer, session);
-    std::thread processingThread(&Session::processBuffer, session);
-    std::thread receivingThread(&Session::processReceiving, session);
     pressEnterToContinue();
-    
-
 
     int choice;
     bool running = true;
@@ -89,16 +84,15 @@ int main(int argc, char **argv) {
                 pressEnterToContinue();
                 break;
             }
+            case 3: {
+                session.printYourMessages();
+                pressEnterToContinue();
+                break;
+            }
             case 4: {
                 session.sendExit();
                 cout << YELLOW << "Exiting the application.\n" << RESET;
-                pressEnterToContinue();
                 running = false;
-                break;
-            }
-            case 3: {
-                cout << YELLOW << "Your messages\n" << RESET;
-                session.processNotifBuffer();
                 pressEnterToContinue();
                 break;
             }
@@ -108,11 +102,7 @@ int main(int argc, char **argv) {
                 pressEnterToContinue();
         }
     }
-    processingThread.join();
-    receivingThread.join();
-    //notificationsThread.join();
-    
-    // Destrói os semáforos no final do programa
+
     twt::destroySemaphores();
 
     return 0;

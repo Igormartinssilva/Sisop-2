@@ -86,7 +86,7 @@ void write_file( std::string& filename,  std::vector<twt::UserInfo>& users) {
 
 int findMaxUserId( std::vector<twt::UserInfo>& userVector) {
     if (userVector.empty()) {
-        return 1;
+        return 0;
     }
 
     int maxUserId = userVector[0].getId(); // Inicialize com o ID do primeiro usuário

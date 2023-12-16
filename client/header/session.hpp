@@ -2,31 +2,38 @@
 
 #include "client.hpp"
 #include "../../common/header/data.hpp"
-#include "message.hpp"
 #include "../../server/header/server.hpp"
 #include <fstream>
+#include <thread>
+#include <mutex>
 
 class Session {
 private:
+    std::thread processingThread;
+    bool ackReceived;
     bool running;
     bool logged;
-
     Client client;
     twt::User user;
-    std::queue<std::pair<const sockaddr_in&, const std::string&>> receivingBuffer;
-    std::queue<twt::Message> notificationBuffer;
-    int clientSocket;
+    void processBuffer();
+    std::queue<std::string> messageBuffer;
+    std::mutex bufferMutex;
+    void processReceiving();
+    std::string getMessageBuffer();
+    void waitForAck();
+    
 
 public:
     Session();
     Session(std::string);
-    bool isLogged();
-    void processReceiving();
-    void processBuffer();
-    void processNotifBuffer();
+
     void sendLogin(const std::string& username);
     void sendFollow(const std::string& username);
-    void sendMessage(const std::string& messageContent);
+    void sendMessage(const std::string& message);
     void sendExit();
+    void printYourMessages();
     
+    bool isLogged();
 };
+
+

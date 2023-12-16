@@ -3,6 +3,7 @@
 Session::Session() : client() {
     std::ifstream file; // TODO: generalize to FILE_IP define directive
     file.open("../asserts/ip.txt");
+    this->logged = false;
     this->running = true;
     if (file.is_open()) {
         std::string buffer;
@@ -10,13 +11,16 @@ Session::Session() : client() {
         std::cout << "ip found in file, ip: " << buffer << std::endl;
         client.setServer(buffer.c_str());
     } else {
-        client.setServer("143.54.53.113"); //143.54.50.200 (dick) 143.54.48.125(luis) 172.25.219.12(igor) 143.54.53.113 (carlos)
+        client.setServer("143.54.53.113"); 
     }
+    processingThread = std::thread(&Session::processBuffer, this);
 }
 
 Session::Session(std::string ip) : client() {
     this->running = true;
+    this->logged = false;
     client.setServer(ip.c_str());
+    processingThread = std::thread(&Session::processBuffer, this);
 }
 
 bool Session::isLogged(){
@@ -24,85 +28,84 @@ bool Session::isLogged(){
 }
 
 void Session::sendLogin(const std::string& username) {
-    int id = client.sendLogin(username);
-    if (id != -1){
-        twt::User user;
-        user.userId = id;
-        user.username = username;
-        this->user = user;
-        this->logged = true;    
-    }
-    else
-        this->logged = false;
+    user.username = username;
+    std::vector<char> payload = twt::serializeLoginPayload(username);
+    client.sendPacket(twt::PacketType::Login, payload);
+    std::cout << "waiting for acknowledgment..." << std::endl;
+    std::cout << "user.userId (esquenta) : " << user.userId << std::endl;
+    waitForAck();
+    std::cout << "user.userId (after): " << user.userId << std::endl;
 }
 
 void Session::sendFollow(const std::string& username) {
-    if (this->user.userId == 0)
-        return;
-    client.sendFollow(this->user.userId, username);
+    if (!isLogged()) return;
+    std::vector<char> payload = twt::serializeFollowPayload(user.userId, username);
+    std::cout << "user.userId no follow : " << user.userId << std::endl;
+    client.sendPacket(twt::PacketType::Follow, payload);
+    waitForAck();
 }
 
-void Session::sendMessage(const std::string& messageContent) {
-    if (this->user.userId == 0)
-        return;
-    client.sendMessage(this->user.userId, messageContent);
+void Session::sendMessage(const std::string& message) {
+    if (!isLogged()) return;
+    std::vector<char> payload = twt::serializeMessagePayload(user.userId, message);
+    client.sendPacket(twt::PacketType::Mensagem, payload);
+    waitForAck();
 }
 
 void Session::sendExit() {
-    if (this->user.userId == 0)
-        return;
-    client.sendExit(this->user.userId);
-}
-
-void Session::processReceiving() {
-    while (running) {
-        sockaddr_in serverAddress;
-        socklen_t serverSize = sizeof(serverAddress);
-
-        char buffer[BUFFER_SIZE];
-        memset(buffer, 0, BUFFER_SIZE);
-
-        int bytesRead = recvfrom(clientSocket, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&serverAddress, &serverSize);
-        if (bytesRead > 0) 
-        {            
-            std::lock_guard<std::mutex> lock(mutex);
-            receivingBuffer.push({serverAddress, buffer});
-            std::string str(buffer);
-            int index = str.find(',');
-            std::string username = str.substr(0, index);
-            int newIndex = str.find(',', index+1);
-            int userId = atoi(str.substr(index+1, newIndex).c_str());
-            std::string content = str.substr(newIndex+1);
-            notificationBuffer.push({{username, userId}, content});
-        }
-    }
+    if (!isLogged()) return;
+    std::vector<char> payload = twt::serializeExitPayload(user.userId);
+    client.sendPacket(twt::PacketType::Exit, payload);
+    waitForAck();
+    logged = false;
+    running = false;
 }
 
 void Session::processBuffer() {
-    while (running) {
-        std::lock_guard<std::mutex> lock(mutex);
-        if (!receivingBuffer.empty()) {
-            std::pair<const sockaddr_in&, const std::string&> bufferValue = receivingBuffer.front();
-            const sockaddr_in& serverAddress = bufferValue.first;
-            std::string packet = bufferValue.second;
-            receivingBuffer.pop();
-            char receiveAck[BUFFER_SIZE];
-            memset(receiveAck, 0, BUFFER_SIZE);
-            strcpy(receiveAck, "Message Received");
-
-            sendto(clientSocket, receiveAck, BUFFER_SIZE, 0, (struct sockaddr*)&serverAddress, sizeof(serverAddress));
-
-        } else {
-            sleep(0.1);
+    while (true) {
+        std::string packet = client.getBuffer();
+        if (strcmp(packet.c_str(), "") != 0){
+            if (packet.substr(0, 3) == "ACK") {
+                std::cout << "Packet: " << packet << std::endl;
+                if (packet.substr(0, 7) == "ACK_LOG") {
+                    int index = packet.find(',', 8);
+                    user.userId = atoi(packet.substr(8, index).c_str());
+                    logged = true;
+                }
+                ackReceived = true;
+            } else {
+                messageBuffer.push(packet);
+            }
+        }
+        else {
+            sleep(0.01);
         }
     }
 }
 
-void Session::processNotifBuffer() {
-    while(!notificationBuffer.empty()) {
-        twt::Message msg = notificationBuffer.front();
-        std::cout << "New Message from " << msg.sender.username << ": " << std::endl;
-        std::cout << msg.content << std::endl;
-        notificationBuffer.pop();
+std::string Session::getMessageBuffer() {
+    std::lock_guard<std::mutex> lock(bufferMutex);
+
+    if(messageBuffer.empty()) {
+        return "";
+    }
+
+    std::string next = messageBuffer.front();
+    messageBuffer.pop();
+    return next;
+}
+
+void Session::waitForAck() {
+    while (!ackReceived);
+    ackReceived = false;
+}
+
+void Session::printYourMessages() {
+    while (true) {
+        std::string message = this->getMessageBuffer();
+        if (message.empty()) {
+            break;
+        }
+        std::cout << message << std::endl;
     }
 }

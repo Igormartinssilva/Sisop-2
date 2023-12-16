@@ -54,10 +54,10 @@ private:
     std::queue<twt::Message> messageBuffer; // Messages of the tr
     std::queue<std::pair<const sockaddr_in&, const std::string&>> loginBuffer;
     
-
-    
-    
-    std::mutex mutex;
+    std::mutex mutexProcBuff;
+    std::mutex mutexUsers;
+    std::mutex mutexMsgBuff;
+    std::mutex mutexLogBuff;
     bool running;
 };
 

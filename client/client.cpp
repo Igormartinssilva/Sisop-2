@@ -12,7 +12,7 @@ Client::Client() {
 }
 
 Client::~Client() {
-    close(sockfd);
+    receivingThread.join();
 }
 
 void Client::setServer(const char *hostname) {
@@ -25,72 +25,79 @@ void Client::setServer(const char *hostname) {
     serv_addr.sin_family = AF_INET;
     serv_addr.sin_port = htons(PORT);
     serv_addr.sin_addr = *((struct in_addr *)server->h_addr);
-}
-
-int Client::sendLogin(const std::string& username) {
-    std::vector<char> payload = twt::serializeLoginPayload(username);
-    return sendPacket(twt::PacketType::Login, payload);
-}
-
-void Client::sendFollow(int followerId, const std::string& username) {
-    std::vector<char> payload = twt::serializeFollowPayload(followerId, username);
-    sendPacket(twt::PacketType::Follow, payload);
-}
-
-void Client::sendMessage(int senderId, const std::string& message) {
-    std::vector<char> payload = twt::serializeMessagePayload(senderId, message);
-    sendPacket(twt::PacketType::Mensagem, payload);
-}
-
-void Client::sendExit(int accountId) {
-    std::vector<char> payload = twt::serializeExitPayload(accountId);
-    sendPacket(twt::PacketType::Exit, payload);
+    
+    receivingThread = std::thread(&Client::processReceiving, this);
 }
 
 int Client::sendPacket(twt::PacketType type, const std::vector<char>& payload) {
     twt::Packet packet;
-    packet.type = static_cast<uint16_t>(type);
-    packet.sequence_number = 250; // You may set a meaningful sequence number here
-    packet.timestamp = 150; // You may set a meaningful timestamp here
+    packet.type = static_cast<uint16_t>(type); 
+    packet.sequence_number = 250; 
+    packet.timestamp = 150; 
     std::memcpy(packet.payload, payload.data(), std::min(sizeof(packet.payload), payload.size()));
     std::vector<char> bitstream = twt::serializePacket(packet);
 
     char bits[BUFFER_SIZE];
     for (int i = 0; i < BUFFER_SIZE; i ++)
         bits[i] = bitstream[i];
-    
-
-    if (DEBUG_CLIENT){
-        for (char ch : bitstream)
-            std::cout << int(ch) << " ";
-        std::cout << std::endl;
-    }
 
     int n;
 
-    // Send the bitstream to the server
-    n = sendto(sockfd, &bits, BUFFER_SIZE, 0,
-               (const struct sockaddr *)&serv_addr, sizeof(serv_addr));
-
+    char buffer[INET_ADDRSTRLEN];
+    inet_ntop(AF_INET, &serv_addr.sin_addr, buffer, sizeof(buffer));
+    
+    n = sendto(sockfd, &bits, BUFFER_SIZE, 0, (const struct sockaddr *)&serv_addr, sizeof(serv_addr));
+    std::cout << "serv_addr: " << buffer << std::endl;
+    std::cout << "n: " << n << std::endl;
+    std::cout << "sockfd: " << sockfd << std::endl;
+    
     if (n < 0) {
         perror("ERROR in sendto");
         std::cerr << "Error code: " << errno << std::endl;
+    } 
+
+    return n;
+}
+
+void Client::processReceiving() {
+    while (true) {
+        char buffer[BUFFER_SIZE] = {0};
+        struct sockaddr_in servaddr;
+        socklen_t len;
+        int valread;
+
+        len = sizeof(servaddr);
+        valread = recvfrom(sockfd, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&servaddr, &len);
+        if(valread == -1) {
+            perror("Error receiving data");
+            break;
+        }
+
+        // Bloqueie o mutex antes de acessar o buffer de recebimento
+        std::lock_guard<std::mutex> lock(bufferMutex);
+
+        // Adicione os dados recebidos ao buffer de recebimento
+        receivingBuffer.push(buffer);
+
+        // Notifique qualquer thread que esteja esperando que o buffer de recebimento esteja cheio
+        bufferCondVar.notify_all();
+
+        // Limpe o buffer
+        memset(buffer, 0, sizeof(buffer));
     }
-    // Receive an acknowledgment into a temporary buffer
-    char ack[BUFFER_SIZE];
-    n = recvfrom(sockfd, &ack, BUFFER_SIZE, 0, nullptr, nullptr);
-    if (n < 0) {
-        perror("ERROR recvfrom");
-        std::cerr << "Error code: " << errno << std::endl;
+}
+
+std::string Client::getBuffer() {
+    // Bloqueie o mutex antes de acessar o buffer de recebimento
+    std::lock_guard<std::mutex> lock(bufferMutex);
+
+    // Se o buffer de recebimento estiver vazio, retorne uma string vazia
+    if(receivingBuffer.empty()) {
+        return "";
     }
-    // Print the acknowledgment
-    int id;
-    std::cout << "Got an ack: " << ack << std::endl;
-    std::string str(ack); 
-    if (packet.type == twt::Login && str.length() > 12){
-        id = std::stoi(str.substr(14));
-    }else{
-        id = -1;
-    }
-    return id;
+
+    // Caso contrário, obtenha a próxima string do buffer de recebimento
+    std::string next = receivingBuffer.front();
+    receivingBuffer.pop();
+    return next;
 }
