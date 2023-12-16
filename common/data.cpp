@@ -227,12 +227,12 @@ void twt::UsersList::removeUser(int userId){
 }
 
 std::vector<int> twt::UsersList::getUserIds() {
-        std::vector<int> userIds;
-        for (const auto& pair : users) {
-            userIds.push_back(pair.first);
-        }
-        return userIds;
+    std::vector<int> userIds;
+    for (const auto& pair : users) {
+        userIds.push_back(pair.first);
     }
+    return userIds;
+}
 
 twt::UserInfo& twt::UsersList::getUser(int userId) {
         return users[userId];
@@ -252,7 +252,7 @@ std::vector<twt::UserInfo> twt::UsersList::storageMap() {
     return result;
 }
 
-void twt::UsersList::loadMap(std::vector<twt::UserInfo>& users_list) {
+void twt::UsersList:: loadMap(std::vector<twt::UserInfo>& users_list) {
     for (auto& user : users_list) 
     {
         this->users[user.getId()] = user;  // Usa getId() como chave e insere no mapa
@@ -315,7 +315,9 @@ void twt::UserInfo::display() {
     std::cout << "\033[1;31m" << getUsername() << "\033[0m" << std::endl;
 }
 
-
+void twt::UserInfo::addToFollowers(int id){
+    followers.insert(id);
+}
 
 // Função para criar uma sessão para um usuário
 int twt:: UsersList::createSession(std::string username) {
@@ -345,7 +347,11 @@ int twt:: UsersList::createSession(std::string username) {
     return id;
 }
  
-     // Função para fazer logout de uma sessão de um usuário
+void twt::UsersList::follow(int followerId, int followedId){
+    users[followedId].addToFollowers(followerId);
+}
+
+// Função para fazer logout de uma sessão de um usuário
 void twt::UsersList::logout(int userId) {
     users[userId].logout();
 

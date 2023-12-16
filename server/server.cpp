@@ -30,8 +30,9 @@ void printMenu() {
     std::cout << BLUE << ">>-- Welcome to Y --<<" << RESET << std::endl << std::endl; 
     std::cout << RED << "1. " << RESET << "Display User List\n";
     std::cout << RED << "2. " << RESET << "Display Followers List\n";
-    std::cout << RED << "3. " << RESET << "Delete Database\n";
-    std::cout << RED << "4. " << RESET << "Exit\n";
+    std::cout << RED << "3. " << RESET << "Save Database\n";
+    std::cout << RED << "4. " << RESET << "Delete Database\n";
+    std::cout << RED << "5. " << RESET << "Exit\n";
     std::cout << BLUE << "Choose an option: " << RESET;
 }
 
@@ -63,6 +64,12 @@ void UDPServer::start() {
                 break;
             }
             case 3: {
+                saveDataBase();
+                std::cout << "Database sucessfully saved!" << std::endl;
+                pressEnterToContinue();
+                break;
+            }
+            case 4: {
                 std::cout << "Enter the passcode:\n";
                 std::string passcode;
                 std::cin >> passcode;
@@ -75,10 +82,14 @@ void UDPServer::start() {
                 pressEnterToContinue();
                 break;
             }
-            case 4: {
+            case 5: {
                 std::cout << "Exiting the application.\n";
                 pressEnterToContinue();
                 running = false;
+                break;
+            }
+            case 6: {
+                loadDataBase();
                 break;
             }
             default:
@@ -149,6 +160,7 @@ void UDPServer::processPacket() {
 
                     } else {
                         followers.follow(followerId, follewedId);
+                        usersList.follow(followerId, follewedId);
                         saveDataBase();
                         returnMessage = std::string("ACK_FLW,You are now following ") + usernameToFollow +  std::string(".\n");
                     }
@@ -301,21 +313,12 @@ void UDPServer::saveDataBase(){
     loadFollowersIntoUsersList();
     users_vector = usersList.storageMap();
     // Para cada userId na usersList
-    for (int userId : usersList.getUserIds()) {
-        // Obter o nome de usuário para o userId
-        std::string username = usersList.getUsername(userId);
 
-        // Imprimir o nome de usuário
-        std::cout << "User ID: " << userId << ", Username: " << username << std::endl;
-
-        // Obter os seguidores do usuário
-        std::unordered_set<int> followers = usersList.getUser(userId).getFollowers();
-
-        // Imprimir os seguidores do usuário
-        std::cout << "Followers: ";
-        for (int followerId : followers) {
-            std::cout << followerId << " ";
-        }
+    for (auto user : users_vector){
+        std::cout << "User ID: " << RED << user.getId() << RESET << ", Username: " << RED << user.getUsername() << RESET << std::endl;
+        std::cout << "Followers: " << std::endl;
+        for (auto followerId : user.getFollowers())
+            std::cout << '\t' << PURPLE << followerId << RESET << ": " << BLUE << usersList.getUsername(followerId) << std::endl;
         std::cout << std::endl;
     }
     write_file(database_name, users_vector);

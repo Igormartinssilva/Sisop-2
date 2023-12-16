@@ -43,7 +43,6 @@ private:
         
     void handleLogout(const sockaddr_in& clientAddress, int id);
     
-    
     void broadcastMessage(int receiverId);
 
 
