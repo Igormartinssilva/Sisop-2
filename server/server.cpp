@@ -3,8 +3,7 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-
-
+#include "../common/header/utils.hpp"
 
 UDPServer::UDPServer(int port) {
     serverSocket = socket(AF_INET, SOCK_DGRAM, 0);
@@ -27,32 +26,14 @@ UDPServer::UDPServer(int port) {
 UDPServer::~UDPServer() {
 }
 
-constexpr char RED[] = "\033[1;31m";
-constexpr char GREEN[] = "\033[1;32m";
-constexpr char YELLOW[] = "\033[1;33m";
-constexpr char BLUE[] = "\033[1;34m";
-constexpr char RESET[] = "\033[0m";
 void printMenu() {
     std::cout << BLUE << ">>-- Welcome to Y --<<" << RESET << std::endl << std::endl; 
     std::cout << RED << "1. " << RESET << "Display User List\n";
     std::cout << RED << "2. " << RESET << "Display Followers List\n";
-    std::cout << RED << "3. " << RESET << "Exit\n";
+    std::cout << RED << "3. " << RESET << "Delete Database\n";
+    std::cout << RED << "4. " << RESET << "Exit\n";
     std::cout << BLUE << "Choose an option: " << RESET;
 }
-
-void clearScreen() {
-#ifdef _WIN32
-    std::system("cls");
-#else
-    std::system("clear");
-#endif
-}
-
-void pressEnterToContinue() {
-    std::cout << YELLOW << "\n[Press Enter to Continue]" << RESET;
-    std::cin.ignore(); // Wait for Enter key press
-}
-
 
 void UDPServer::start() {
     std::cout << "Server listening on port " << PORT << "...\n";
@@ -82,6 +63,19 @@ void UDPServer::start() {
                 break;
             }
             case 3: {
+                std::cout << "Enter the passcode:\n";
+                std::string passcode;
+                std::cin >> passcode;
+                if (passcode.compare("reinoredondo") == 0){
+                    system("rm database.txt");
+                    std::cout << "Database Successfully removed" << std::endl;
+                } else {
+                    std::cout << "Incorrect Passcode" << std::endl;
+                }
+                pressEnterToContinue();
+                break;
+            }
+            case 4: {
                 std::cout << "Exiting the application.\n";
                 pressEnterToContinue();
                 running = false;
@@ -108,7 +102,6 @@ void UDPServer::handlePackets() {
         std::vector<char> buffer(BUFFER_SIZE);
         memset(buffer.data(), 0, sizeof(buffer));
 
-        std::cout << "Waiting for recvfrom" << std::endl;
         int bytesRead = recvfrom(serverSocket, buffer.data(), buffer.size(), 0, (struct sockaddr*)&clientAddress, &clientSize);
         if (bytesRead > 0) {            
             std::lock_guard<std::mutex> lock(mutexProcBuff);
@@ -139,7 +132,6 @@ void UDPServer::processPacket() {
                     break;
                 }
                 case twt::PacketType::Follow: {
-                    std::cout << "Follow request received" << std::endl;
                     std::pair<int, std::string> payload = twt::deserializeFollowPayload(packet);
                     int followerId = payload.first;
                     std::string usernameToFollow = payload.second;
@@ -214,15 +206,16 @@ void UDPServer::processLogin() {
             sockaddr_in clientAddress = pkt.first;
             std::string username = pkt.second;
 
-            // std::cout << "username: " << username << std::endl;
-
             int id = usersList.createSession(username);
             std::string replyMessage = std::string("ACK_LOG,") + std::to_string(id) + std::string(",") + username.c_str() + std::string(",");
             
             if (id != -1) {
                 saveDataBase();
                 connectedUsers[id].push_back(clientAddress);
+                replyMessage = replyMessage + std::string(GREEN) + "Usuario @" + username + " conectado com sucesso!" + GREEN;
                 //broadcastMessage(id);
+            } else {
+                replyMessage = replyMessage + std::string(RED) + "Usuario @" + username + " nao pode se conectar" + RESET;
             }
             std::cout << "sending ack for login: " << username << " id: " << id << std::endl;
             sendto(serverSocket, replyMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
@@ -243,11 +236,8 @@ void UDPServer::processMessages(){
         std::lock_guard<std::mutex> lock(mutexMsgBuff);
         if (!messageBuffer.empty()){
             twt::Message msg = messageBuffer.front();
-            std::cout << msg.sender.userId << std::endl;
             std::unordered_set<int> userFollowers = this->followers.getFollowers(msg.sender.userId);
-            std::cout << "Lista de followers de " << msg.sender.userId << " - " << msg.sender.username << ": ";
-            for (auto i : userFollowers) std::cout << i << ", ";
-            std::cout << std::endl;
+           
             for (auto f : userFollowers){
                 userMessageBuffer[f].push(msg);
                 if (!connectedUsers[f].empty()){

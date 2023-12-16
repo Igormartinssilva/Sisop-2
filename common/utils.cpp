@@ -19,3 +19,17 @@ bool nameConsistency(std::string name){
         name.find(';') == std::string::npos
     );
 }
+
+void clearScreen() {
+    // Clear screen command based on platform
+#ifdef _WIN32
+    std::system("cls");
+#else
+    std::system("clear");
+#endif
+}
+
+void pressEnterToContinue() {
+    std::cout << YELLOW << "\n[Press Enter to Continue]" << RESET;
+    std::cin.ignore(); // Wait for Enter key press
+}

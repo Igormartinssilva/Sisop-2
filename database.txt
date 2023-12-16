@@ -1,2 +1,2 @@
-Luis;;4
-Mendes;;5
+Mendes;;2
+Luis;;1

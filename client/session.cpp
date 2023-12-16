@@ -1,8 +1,9 @@
 #include "header/session.hpp"
+#include "../common/header/utils.hpp"
 
 Session::Session() : client() {
     std::ifstream file; // TODO: generalize to FILE_IP define directive
-    file.open("../asserts/ip.txt");
+    file.open("asserts/ip.txt");
     this->logged = false;
     this->running = true;
     if (file.is_open()) {
@@ -41,7 +42,7 @@ void Session::sendLogin(const std::string& username) {
 void Session::sendFollow(const std::string& username) {
     if (!isLogged()) return;
     std::vector<char> payload = twt::serializeFollowPayload(user.userId, username);
-    std::cout << "user.userId no follow : " << user.userId << std::endl;
+    //std::cout << "user.userId no follow : " << user.userId << std::endl;
     client.sendPacket(twt::PacketType::Follow, payload);
     waitForAck();
 }
@@ -69,23 +70,25 @@ void Session::processBuffer() {
             if (packet.substr(0, 3) == "ACK") {
                 if (packet.substr(0, 7) == "ACK_LOG") {
                     int index = packet.find(',', 8);
+                    int index1 = packet.find(',', index+1);
                     user.userId = atoi(packet.substr(8, index).c_str());
-                    std::cout << user.userId << std::endl;
-                    if (user.userId != -1)
+                    user.username = packet.substr(index+1, index1);
+                    std::string serverMsg = packet.substr(index1+1);
+                    if (user.userId != -1){
                         logged = true;
-                    else
+                    } else {
                         logged = false;
-                    std::cout << int(user.userId != -1) << std::endl;
-
+                    }
+                    std::cout << PURPLE << "Server Message: " << RESET << serverMsg << std::endl;
                 }
                 else if (packet.substr(0, 7) == "ACK_FLW") {
-                    std::cout << packet.substr(8) << std::endl;
+                    std::cout << PURPLE << "Server Message: " << RESET << packet.substr(8) << std::endl;
                 }
                 else if (packet.substr(0, 7) == "ACK_MSG") {
-                    std::cout << packet.substr(8) << std::endl;
+                    std::cout << PURPLE << "Server Message: " << RESET << packet.substr(8) << std::endl;
                 }
                 else if (packet.substr(0, 7) == "ACK_EXT") {
-                    std::cout << packet.substr(8) << std::endl;
+                    std::cout << PURPLE << "Server Message: " << RESET << packet.substr(8) << std::endl;
                 }
                 ackReceived = true;
             } else {
@@ -115,12 +118,6 @@ void Session::waitForAck() {
     ackReceived = false;
 }
 
-constexpr char RED[] = "\033[1;31m";
-constexpr char GREEN[] = "\033[1;32m";
-constexpr char YELLOW[] = "\033[1;33m";
-constexpr char BLUE[] = "\033[1;34m";
-constexpr char PURPLE[] = "\033[1;35m";
-constexpr char RESET[] = "\033[0m";
 
 void Session::printYourMessages() {
     while (true) {

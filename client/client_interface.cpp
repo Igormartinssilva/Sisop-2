@@ -6,30 +6,9 @@
 #include "../common/header/utils.hpp"
 #include <semaphore.h>
 using namespace std;
-// ANSI color codes
-constexpr char RED[] = "\033[1;31m";
-constexpr char GREEN[] = "\033[1;32m";
-constexpr char YELLOW[] = "\033[1;33m";
-constexpr char BLUE[] = "\033[1;34m";
-constexpr char PURPLE[] = "\033[1;35m";
-constexpr char RESET[] = "\033[0m";
-
-void clearScreen() {
-    // Clear screen command based on platform
-#ifdef _WIN32
-    std::system("cls");
-#else
-    std::system("clear");
-#endif
-}
-
-void pressEnterToContinue() {
-    cout << YELLOW << "\n[Press Enter to Continue]" << RESET;
-    std::cin.ignore(); // Wait for Enter key press
-}
 
 void printMenu(std::string username) {
-    cout << BLUE << ">>-- Welcome to Y --<<" << RESET << std::endl << std::endl;
+    cout << BLUE << ">>-- Welcome to Y --<<" << RESET << "  connected as @" << username << std::endl << std::endl;
     cout << "Hello, " << BLUE << username << RESET << " (@" << username << ")!" << std::endl << std::endl;
     cout << PURPLE << "1. " << RESET << "Send Message\n";
     cout << PURPLE << "2. " << RESET << "Follow User\n";
@@ -75,9 +54,10 @@ int main(int argc, char **argv) {
         session.sendLogin(username);
         if (!session.isLogged())
             cout << "Nao foi possivel fazer login. Numero maximo de sessoes por conta excedido" << endl;
+        pressEnterToContinue();
     }
     
-    pressEnterToContinue();
+    
 
     int choice;
     bool running = true;

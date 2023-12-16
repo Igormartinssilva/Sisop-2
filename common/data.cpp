@@ -210,10 +210,7 @@ void twt::UsersList::logout(int userId){
 }*/
 
 int twt::UsersList::getUserId(std::string username){
-    std::cout << "Length of usersId = " << this->usersId.size() << std::endl;
     for (std::pair<const std::string, int> id : usersId) {
-        std::cout << "comparing " << id.first << " with " << username << std::endl;
-        std::cout << "result = " << (std::strcmp(id.first.c_str(), username.c_str())) << std::endl;
         if (std::strcmp(id.first.c_str(), username.c_str()) == 0){
             return id.second;
         }
@@ -323,12 +320,9 @@ void twt::UserInfo::display() {
 // Função para criar uma sessão para um usuário
 int twt:: UsersList::createSession(std::string username) {
     int id = getUserId(username);
-    std::cout << "inside create session: username = " << username << ", id = " << std::to_string(id) << std::endl;
     if (id == -1) {
         id = appendUser(username);
-        std::cout << "\n> User created: " << username << " with ID: " << id << std::endl;
         users[id].createSession();
-        std::cout << "\n> Creating session: " << username << " with ID: " << id << std::endl;
         return id;
     } else {
         // Agora, antes de criar uma nova sessão, esperamos o semáforo
