@@ -17,5 +17,5 @@
     #define MAX_SESSIONS 2
 #endif
 #ifndef IP_FILE
-    #define IP_FILE "../asserts/ip.txt"
+    #define IP_FILE "../assets/ip.txt"
 #endif

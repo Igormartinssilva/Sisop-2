@@ -12,17 +12,13 @@
 #include <cstdint>
 #include <sstream>
 #include <semaphore.h>
-#include "../../asserts/constraints.hpp"
+#include "../../assets/constraints.hpp"
 
 namespace twt{
-
-	struct Packet {
-		uint16_t type;
-		uint16_t sequence_number;
-		uint16_t timestamp;
-		char payload[MSG_SIZE];
-	};
-
+	extern sem_t sessionSemaphore;
+	void initializeSemaphores();
+	void destroySemaphores();
+	
 	enum PacketType : uint16_t {
 		Mensagem = 0,
 		Login,
@@ -31,32 +27,23 @@ namespace twt{
 		Ping
 	};
 
-    // Serialization and Deserialization functions for different payloads
-    std::vector<char> serializeMessagePayload(int senderId, const std::string& message);
-    std::pair<int, std::string> deserializeMessagePayload(const std::vector<char>& data);
-
-
-
-    std::vector<char> serializeFollowPayload(int followerId, const std::string& username);
-    std::pair<int, std::string> deserializeFollowPayload(const std::vector<char>& data);
-
-    std::vector<char> serializeExitPayload(int accountId);
-    int deserializeExitPayload(const std::vector<char>& data);
-
-	std::vector<char> serializePingPayload(int accountId);
-    int deserializePingPayload(const std::vector<char>& data);
-
-    std::vector<char> serializeLoginPayload(const std::string& username);
-    std::string deserializeLoginPayload(const std::vector<char>& data);
-
-
-	std::vector<char> serializePacket(const twt::Packet &pkg);
-	twt::Packet deserializePacket(const std::vector<char> &data);
+	struct Packet {
+		uint16_t type;
+		uint16_t sequence_number;
+		uint16_t timestamp;
+		char payload[MSG_SIZE];
+	};
 
 	struct User{
 		std::string username;
 		int userId;
 	};
+	
+	struct Message {
+		User sender;
+		std::string content;
+	};
+
 
 	class Followers{
 		private:
@@ -111,15 +98,6 @@ namespace twt{
 			std::vector<twt::UserInfo> storageMap();
 			void loadMap(std::vector<twt::UserInfo>& users_list);
 	};
-
-	struct Message {
-		User sender;
-		std::string content;
-	};
-
-	extern sem_t sessionSemaphore;
-	void initializeSemaphores();
-    void destroySemaphores();
 }
 
 #endif

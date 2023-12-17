@@ -5,7 +5,8 @@
 #define DEBUG_CLIENT false
 
 #include "../../common/header/data.hpp"
-#include "../../asserts/constraints.hpp"
+#include "../../common/header/serialize.hpp"
+#include "../../assets/constraints.hpp"
 #include <condition_variable>
 #include <thread>
 #include <iostream>
@@ -27,9 +28,10 @@ public:
     std::condition_variable bufferCondVar;
     void decodeReceiving();
     std::string getBuffer();
-    int sendPacket(twt::PacketType type, const std::vector<char>& payload);
+    int sendPacket(twt::PacketType type, uint16_t timeStamp, const std::string& payload);
     
 private:
+    uint16_t sequence_number;
     std::thread receivingThread;
     struct sockaddr_in serv_addr;
     int clientSocket;

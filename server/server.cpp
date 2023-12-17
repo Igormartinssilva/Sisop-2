@@ -48,11 +48,13 @@ void UDPServer::start() {
     //std::thread processPingEraseThread(&UDPServer::processPingErase, this);
 
     while (running) {
+        std::string buffer;
         int choice;
         clearScreen();
         printMenu();
-        std::cin >> choice;
+        std::cin >> buffer;
         std::cin.ignore(); // Consume newline character
+        choice = atoi(buffer.c_str());
 
         switch (choice) {
             case 1: {
@@ -76,7 +78,7 @@ void UDPServer::start() {
                 std::string passcode;
                 std::cin >> passcode;
                 if (passcode.compare("taylorswift") == 0){
-                    system("rm database.txt");
+                    system("rm assets/database.txt");
                     std::cout << "Database Successfully removed" << std::endl;
                 } else {
                     std::cout << "Incorrect Passcode" << std::endl;
@@ -111,14 +113,20 @@ void UDPServer::start() {
 }
 
 void UDPServer::handlePackets() {
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000;  // 100 milliseconds
+    if (setsockopt(serverSocket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+        perror("Error setting socket options");
+    }
+
     while (running) {
         sockaddr_in clientAddress;
         socklen_t clientSize = sizeof(clientAddress);
 
-        std::vector<char> buffer(BUFFER_SIZE);
-        memset(buffer.data(), 0, sizeof(buffer));
+        char buffer[BUFFER_SIZE] = {0};
 
-        int bytesRead = recvfrom(serverSocket, buffer.data(), buffer.size(), 0, (struct sockaddr*)&clientAddress, &clientSize);
+        int bytesRead = recvfrom(serverSocket, buffer, BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, &clientSize);
         if (bytesRead > 0) {            
             std::lock_guard<std::mutex> lock(mutexProcBuff);
             processingBuffer.push({clientAddress, buffer});
@@ -129,30 +137,32 @@ void UDPServer::handlePackets() {
 
 void UDPServer::processPacket() {
     while (running) {
-        std::lock_guard<std::mutex> lock(mutexProcBuff);
+        std::unique_lock<std::mutex> lock(mutexProcBuff);
         if (!processingBuffer.empty()) {
             std::string returnMessage("unknown type");
-            std::pair<const sockaddr_in&, const std::vector<char>&> bufferValue = processingBuffer.front();
+            std::pair<const sockaddr_in&, const std::string&> bufferValue = processingBuffer.front();
             const sockaddr_in& clientAddress = bufferValue.first;
-            std::vector<char> packet = bufferValue.second;
+            std::string packet = bufferValue.second;
             processingBuffer.pop();
 
             twt::Packet pack = twt::deserializePacket(packet);
 
             switch (pack.type) {
                 case twt::PacketType::Mensagem: {
-                    std::pair<int, std::string> payload = twt::deserializeMessagePayload(packet);
+                    std::pair<int, std::string> payload = twt::deserializeMessagePayload(pack.payload);
                     messageBuffer.push({{usersList.getUsername(payload.first), payload.first}, payload.second});
                     returnMessage = "ACK_MSG,Message request received\nSender ID: " + std::to_string(payload.first) + "\nMessage: " + payload.second + "\n";
                     sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
                     break;
                 }
                 case twt::PacketType::Follow: {
-                    std::pair<int, std::string> payload = twt::deserializeFollowPayload(packet);
+                    std::pair<int, std::string> payload = twt::deserializeFollowPayload(pack.payload);
+                    std::cout << pack.payload << std::endl;
                     int followerId = payload.first;
                     std::string usernameToFollow = payload.second;
 
-            
+                    std::cout << "User " << usersList.getUsername(followerId) << " is trying to follow " << usernameToFollow << std::endl;
+
                     int follewedId = usersList.getUserId(usernameToFollow);
                     if (follewedId == -1) {  // User not found
                         returnMessage = "ACK_FLW,User not found. Unable to follow.\n";
@@ -175,12 +185,12 @@ void UDPServer::processPacket() {
                     break;
                 }
                 case twt::PacketType::Login: {
-                    std::string username = twt::deserializeLoginPayload(packet);
+                    std::string username = twt::deserializeLoginPayload(pack.payload);
                     loginBuffer.push({clientAddress, username});
                     break;
                 }
                 case twt::PacketType::Exit: {
-                    int accountId = twt::deserializeExitPayload(packet);
+                    int accountId = twt::deserializeExitPayload(pack.payload);
                     handleLogout(clientAddress, accountId);
                     returnMessage = "ACK_EXT,Exit request received\nUserId: " + std::to_string(accountId) + "\n";
                     std::cout << returnMessage;
@@ -189,7 +199,7 @@ void UDPServer::processPacket() {
                     break;
                 }
                 case twt::PacketType::Ping: {
-                    int accountId = twt::deserializePingPayload(packet);
+                    int accountId = twt::deserializePingPayload(pack.payload);
                     returnMessage = "ACK_PNG,Ping ack received\n";
                     std::cout << returnMessage;
                     pingQueue.push({{accountId, {clientAddress.sin_addr.s_addr, clientAddress.sin_port}}, clientAddress});
@@ -197,8 +207,10 @@ void UDPServer::processPacket() {
                     break;
                 }
             }
+            lock.unlock();
         } else {
-            
+            lock.unlock();
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 }
@@ -233,7 +245,7 @@ void UDPServer::processLogin() {
             std::pair<const sockaddr_in&, const std::string&> pkt = loginBuffer.front();
             sockaddr_in clientAddress = pkt.first;
             std::string username = pkt.second;
-
+            
             int id = usersList.createSession(username);
             std::string replyMessage = std::string("ACK_LOG,") + std::to_string(id) + std::string(",") + username.c_str() + std::string(",");
             
@@ -261,7 +273,7 @@ void UDPServer::processLogin() {
  
 void UDPServer::processMessages(){
     while(running){
-        std::lock_guard<std::mutex> lock(mutexMsgBuff);
+        std::unique_lock<std::mutex> lock(mutexMsgBuff);
         if (!messageBuffer.empty()){
             twt::Message msg = messageBuffer.front();
             std::unordered_set<int> userFollowers = this->followers.getFollowers(msg.sender.userId);
@@ -271,8 +283,10 @@ void UDPServer::processMessages(){
                     broadcastMessage(f);
             }
             messageBuffer.pop();
+            lock.unlock();
         } else {
-            
+            lock.unlock();
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 }

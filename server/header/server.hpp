@@ -15,8 +15,9 @@
 #include <cstring>
 #include <arpa/inet.h>
 #include "../../common/header/data.hpp"
-#include "../../asserts/constraints.hpp"
+#include "../../assets/constraints.hpp"
 #include "../../database/database.hpp"
+#include "../../common/header/serialize.hpp"
 
 class UDPServer {
 public:
@@ -25,7 +26,7 @@ public:
     void start();
     twt::Followers followers;
     twt::UsersList usersList;
-    std::string database_name = "database.txt";
+    std::string database_name = "assets/database.txt";
 
     void displayUserList();
     void displayFollowersList();
@@ -49,7 +50,7 @@ private:
     bool UserConnected(int userId);
 
     int serverSocket;
-    std::queue<std::pair<const sockaddr_in&, const std::vector<char>>> processingBuffer;
+    std::queue<std::pair<const sockaddr_in&, const std::string>> processingBuffer;
 
     std::unordered_map<int, std::vector<sockaddr_in>> connectedUsers;  // User ID -> Set of connected sessions
     

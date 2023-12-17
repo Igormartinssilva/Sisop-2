@@ -1,6 +1,0 @@
-Menini;;5
-Menin;2,3,;4
-Dick;6,;3
-nouser;;1
-Luis;4,;2
-Nathan;;6

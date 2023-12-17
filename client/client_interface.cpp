@@ -72,16 +72,16 @@ int main(int argc, char **argv) {
             cout << "Nao foi possivel fazer login. Nao foi possivel se conectar ao servidor" << endl;
         pressEnterToContinue();
     }
-    
-    
 
     int choice;
+    std::string buffer;
     bool running = true;
     while (running) {
         clearScreen();
         printMenu(username);
-        std::cin >> choice;
+        std::cin >> buffer;
         std::cin.ignore(); // Consume newline character
+        choice = atoi(buffer.c_str());
 
         switch (choice) {
             case 1: {

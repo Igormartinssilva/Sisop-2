@@ -7,7 +7,7 @@ Client::Client() {
         std::cerr << "Error opening socket" << std::endl;
         exit(EXIT_FAILURE);
     }
-
+    this->sequence_number = 1;
     memset(&serv_addr, 0, sizeof(serv_addr));
 }
 
@@ -29,13 +29,13 @@ void Client::setServer(const char *hostname) {
     receivingThread = std::thread(&Client::processReceiving, this);
 }
 
-int Client::sendPacket(twt::PacketType type, const std::vector<char>& payload) {
+int Client::sendPacket(twt::PacketType type, uint16_t timestamp, const std::string& payload) {
     twt::Packet packet;
     packet.type = static_cast<uint16_t>(type); 
-    packet.sequence_number = 250; 
-    packet.timestamp = 150; 
+    packet.timestamp = timestamp; 
+    packet.sequence_number = sequence_number ++;
     std::memcpy(packet.payload, payload.data(), std::min(sizeof(packet.payload), payload.size()));
-    std::vector<char> bitstream = twt::serializePacket(packet);
+    std::string bitstream = twt::serializePacket(packet);
 
     char bits[BUFFER_SIZE];
     for (int i = 0; i < BUFFER_SIZE; i ++)

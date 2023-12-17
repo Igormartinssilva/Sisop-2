@@ -2,6 +2,7 @@
 
 #include "client.hpp"
 #include "../../common/header/data.hpp"
+#include "../../common/header/serialize.hpp"
 #include "../../server/header/server.hpp"
 #include <fstream>
 #include <thread>
@@ -24,7 +25,7 @@ private:
     std::string getMessageBuffer();
     bool packetTransmited();
     twt::Message decodeMessage(std::string msg);
-    void transmitPacket(twt::PacketType type, const std::vector<char> payload);
+    void transmitPacket(twt::PacketType type, const std::string payload);
     
 
 public:
