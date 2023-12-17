@@ -7,6 +7,9 @@
 #include <semaphore.h>
 using namespace std;
 
+// Variável global para armazenar a sessão
+Session* globalSession = nullptr;
+
 void printMenu(std::string username) {
     cout << BLUE << ">>-- Welcome to Y --<<" << RESET << "  connected as @" << username << std::endl << std::endl;
     cout << "Hello, " << BLUE << username << RESET << " (@" << username << ")!" << std::endl << std::endl;
@@ -22,14 +25,24 @@ void printMenuLoggedOut() {
     cout << BLUE << "Insert your username [deixe em branco para sair]: " << RESET;
 }
 
+void signalHandler(int signum) {
+    std::cout << "Intercepted signal " << signum << std::endl;
+
+    globalSession->sendExit();
+
+    exit(signum);
+}
+
 int main(int argc, char **argv) {
     Session session(argv[1]);
     string str;
     string username;
+    globalSession = &session;
 
     // Inicializa os semáforos
     twt::initializeSemaphores();
-
+    signal(SIGINT, signalHandler);
+    signal(SIGTERM, signalHandler);
     if (argc < 2)
         cerr << "you must inform IP"<< endl;
     

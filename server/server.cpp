@@ -44,8 +44,8 @@ void UDPServer::start() {
     std::thread processPacketsThread(&UDPServer::processPacket, this);
     std::thread processMessageThread(&UDPServer::processMessages, this);
     std::thread processLoginThread(&UDPServer::processLogin, this);
-    std::thread processPingThread(&UDPServer::processPing, this);
-    std::thread processPingEraseThread(&UDPServer::processPingErase, this);
+    //std::thread processPingThread(&UDPServer::processPing, this);
+    //std::thread processPingEraseThread(&UDPServer::processPingErase, this);
 
     while (running) {
         int choice;

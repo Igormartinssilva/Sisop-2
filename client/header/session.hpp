@@ -6,6 +6,7 @@
 #include <fstream>
 #include <thread>
 #include <mutex>
+#include <signal.h>
 
 class Session {
 private:
@@ -34,7 +35,6 @@ public:
     void sendMessage(const std::string& message);
     void sendExit();
     void printYourMessages();
-    
     bool isLogged();
 };
 
