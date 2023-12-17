@@ -7,6 +7,7 @@
 #include <thread>
 #include <mutex>
 #include <signal.h>
+#include <chrono>
 
 class Session {
 private:
@@ -21,8 +22,9 @@ private:
     std::mutex bufferMutex;
     void processReceiving();
     std::string getMessageBuffer();
-    void waitForAck();
+    bool packetTransmited();
     twt::Message decodeMessage(std::string msg);
+    void transmitPacket(twt::PacketType type, const std::vector<char> payload);
     
 
 public:
@@ -30,7 +32,7 @@ public:
     Session(std::string);
     ~Session();
 
-    void sendLogin(const std::string& username);
+    int sendLogin(const std::string& username);
     void sendFollow(const std::string& username);
     void sendMessage(const std::string& message);
     void sendExit();

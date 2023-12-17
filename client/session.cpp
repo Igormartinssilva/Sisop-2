@@ -32,33 +32,43 @@ bool Session::isLogged(){
     return this->logged;
 }
 
-void Session::sendLogin(const std::string& username) {
+int Session::sendLogin(const std::string& username) {
+    int retransmitAttempts = 0, nacks = 0;
     user.username = username;
     std::vector<char> payload = twt::serializeLoginPayload(username);
-    client.sendPacket(twt::PacketType::Login, payload);
-    waitForAck();
+    do
+    {
+        retransmitAttempts++;
+        std::cout << "Tentativa de transmissão: " << retransmitAttempts << std::endl;
+        client.sendPacket(twt::PacketType::Login, payload);
+        if (!packetTransmited()) nacks++;
+        else break;
+    } while (nacks < 3 && retransmitAttempts < 3);
+    if (nacks == 3) {
+        std::cout<< "Não foi possível se conectar ao servidor" << RED << RESET << std::endl;
+        return 0;
+    } 
+    return 1;
+
+
 }
 
 void Session::sendFollow(const std::string& username) {
     if (!isLogged()) return;
     std::vector<char> payload = twt::serializeFollowPayload(user.userId, username);
     //std::cout << "user.userId no follow : " << user.userId << std::endl;
-    client.sendPacket(twt::PacketType::Follow, payload);
-    waitForAck();
+    transmitPacket(twt::PacketType::Follow, payload);
 }
 
 void Session::sendMessage(const std::string& message) {
     if (!isLogged()) return;
     std::vector<char> payload = twt::serializeMessagePayload(user.userId, message);
-    client.sendPacket(twt::PacketType::Mensagem, payload);
-    waitForAck();
+    transmitPacket(twt::PacketType::Mensagem, payload);
 }
 
 void Session::sendExit() {
-    if (!isLogged()) return;
     std::vector<char> payload = twt::serializeExitPayload(user.userId);
-    client.sendPacket(twt::PacketType::Exit, payload);
-    waitForAck();
+    transmitPacket(twt::PacketType::Exit, payload);
     logged = false;
     running = false;
 }
@@ -115,12 +125,41 @@ std::string Session::getMessageBuffer() {
     return next;
 }
 
-void Session::waitForAck() {
-    while (!ackReceived);
+bool Session::packetTransmited() {
+    auto start = std::chrono::high_resolution_clock::now();
+    while (!ackReceived) {
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end - start;
+        if (elapsed.count() > 3.0) { // Se passaram mais de 3 segundos
+            std::cout << "Ack não recebido, retransmita" << std::endl;
+            return false;
+        }
+        std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Dormir por 10 milissegundos para evitar uso excessivo de CPU
+    }
     ackReceived = false;
+    return true;
 }
 
+void Session::transmitPacket(twt::PacketType type, std::vector<char> payload) {
+    int retransmitAttempts = 0, n, nacks = 0;
+    if (!isLogged()) return;
+    while (nacks < 3 && retransmitAttempts < 3)
+    {
+        retransmitAttempts++;
+        n = client.sendPacket(type, payload);
+        if (!packetTransmited()) nacks++;
+        else break;
+    }
 
+    if (n < 0) {
+        perror("ERROR in sendto");
+        std::cerr << "Error code: " << errno << std::endl;
+    } 
+
+    if (nacks == 3) std::cout<< "Não foi possível se conectar ao servidor, tente novamente dentro de alguns instantes" << RED << RESET << std::endl;
+    
+    return;
+}
 void Session::printYourMessages() {
     while (true) {
         std::string message = this->getMessageBuffer();

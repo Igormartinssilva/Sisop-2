@@ -38,6 +38,7 @@ int main(int argc, char **argv) {
     string str;
     string username;
     globalSession = &session;
+    int problemLogin;
 
     // Inicializa os semáforos
     twt::initializeSemaphores();
@@ -64,9 +65,11 @@ int main(int argc, char **argv) {
             printMenuLoggedOut();
             std::getline(std::cin, username);
         }
-        session.sendLogin(username);
-        if (!session.isLogged())
+        problemLogin = session.sendLogin(username);
+        if (!session.isLogged() && problemLogin == 1)
             cout << "Nao foi possivel fazer login. Numero maximo de sessoes por conta excedido" << endl;
+        else if (!session.isLogged() && problemLogin == 0)
+            cout << "Nao foi possivel fazer login. Nao foi possivel se conectar ao servidor" << endl;
         pressEnterToContinue();
     }
     
