@@ -249,7 +249,7 @@ void UDPServer::processLogin() {
             sendto(serverSocket, replyMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
             // Obter o endereço IP do cliente como uma string
             std::string clientIPAddress = inet_ntoa(clientAddress.sin_addr);
-
+            sendBufferedMessages(id);
             // Imprimir o endereço IP do cliente na tela
             std::cout << "Endereço IP do cliente: " << clientIPAddress << std::endl;
             loginBuffer.pop();
@@ -268,9 +268,7 @@ void UDPServer::processMessages(){
            
             for (auto f : userFollowers){
                 userMessageBuffer[f].push(msg);
-                if (!connectedUsers[f].empty()){
                     broadcastMessage(f);
-                }
             }
             messageBuffer.pop();
         } else {
@@ -279,22 +277,66 @@ void UDPServer::processMessages(){
     }
 }
 
+void UDPServer::sendBufferedMessages(int userId) {
+    auto it = msgToSendBuffer.begin();
+    while (it != msgToSendBuffer.end()) {
+        if (it->first == userId) {
+            while (!it->second.empty()) {
+                twt::Message message = it->second.front();
+                for (const sockaddr_in& userAddr : connectedUsers[userId]){
+                    std::cout << "\n> Sending message: \"" << message.content.c_str() << 
+                        "\" to user @"<< usersList.getUsername(userId) << "(id " << std::to_string(userId) << ")" << 
+                        " from user @" << message.sender.username << " (id " << message.sender.userId << ")" << std::endl;
+                    std::string str(
+                        message.sender.username + ',' + 
+                        std::to_string(message.sender.userId) + ',' +
+                        message.content
+                    );
+                    sendto(serverSocket, str.c_str(), str.length(), 0, (struct sockaddr*)&userAddr, sizeof(userAddr));
+                }
+                it->second.pop();
+            }
+            it = msgToSendBuffer.erase(it);
+        } else {
+            ++it;
+        }
+    }
+}
+
 void UDPServer::broadcastMessage(int receiverId) {
     while (!userMessageBuffer[receiverId].empty()){ 
         twt::Message message = userMessageBuffer[receiverId].front();
-        for (const sockaddr_in& userAddr : connectedUsers[receiverId]){
-            std::cout << "\n> Sending message: \"" << message.content.c_str() << 
-                "\" to user @"<< usersList.getUsername(receiverId) << "(id " << std::to_string(receiverId) << ")" <<
-                " from user @" << message.sender.username << " (id " << message.sender.userId << ")" << std::endl;
-            std::string str(
-                message.sender.username + ',' + 
-                std::to_string(message.sender.userId) + ',' +
-                message.content
-            );
-            sendto(serverSocket, str.c_str(), str.length(), 0, (struct sockaddr*)&userAddr, sizeof(userAddr));
+        if (UserConnected(receiverId)) {
+            for (const sockaddr_in& userAddr : connectedUsers[receiverId]){
+                std::cout << "\n> Sending message: \"" << message.content.c_str() << 
+                    "\" to user @"<< usersList.getUsername(receiverId) << "(id " << std::to_string(receiverId) << ")" <<
+                    " from user @" << message.sender.username << " (id " << message.sender.userId << ")" << std::endl;
+                std::string str(
+                    message.sender.username + ',' + 
+                    std::to_string(message.sender.userId) + ',' +
+                    message.content
+                );
+                sendto(serverSocket, str.c_str(), str.length(), 0, (struct sockaddr*)&userAddr, sizeof(userAddr));
+            }
+        } else {
+            // Se o usuário não estiver conectado, salve o userId e o message.sender.username em msgToSendBuffer
+            std::cout << "User " << usersList.getUsername(receiverId) << " is not connected. Saving message in buffer." << std::endl;
+            msgToSendBuffer[receiverId].push(message);
         }
         userMessageBuffer[receiverId].pop();
     }
+}
+
+bool UDPServer::UserConnected(int userId) {
+    // Verifique se o userId existe em connectedUsers
+    if (connectedUsers.find(userId) != connectedUsers.end()) {
+        // Se existir, verifique se há pelo menos um usuário conectado
+        if (!connectedUsers[userId].empty()) {
+            return true;
+        }
+    }
+    // Se o userId não existir em connectedUsers ou não houver usuários conectados, retorne false
+    return false;
 }
 
 void UDPServer::processPing(){

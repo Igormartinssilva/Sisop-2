@@ -1,5 +1,6 @@
+Nathan;;6
 Luis;4,;2
 nouser;;1
-Dick;;3
+Dick;6,;3
 Menin;3,2,;4
 Menini;;5

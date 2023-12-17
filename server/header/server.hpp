@@ -43,21 +43,21 @@ private:
     void processPing();
     void processPingErase();
     void handleLogout(const sockaddr_in& clientAddress, int id);
+    void sendBufferedMessages(int userId);
     
     void broadcastMessage(int receiverId);
-
+    bool UserConnected(int userId);
 
     int serverSocket;
     std::queue<std::pair<const sockaddr_in&, const std::vector<char>>> processingBuffer;
 
     std::unordered_map<int, std::vector<sockaddr_in>> connectedUsers;  // User ID -> Set of connected sessions
     
-    std::unordered_map<int, std::queue<twt::Message>> userMessageBuffer;  // User ID -> Queue of stored messages
+    std::unordered_map<int, std::queue<twt::Message>> userMessageBuffer, msgToSendBuffer;  // User ID -> Queue of stored messages
     std::queue<twt::Message> messageBuffer; // Messages of the tr
     std::queue<std::pair<std::pair<int, std::pair<in_addr_t, in_port_t>>, sockaddr_in>> pingQueue;
     std::queue<std::pair<const sockaddr_in&, const std::string&>> loginBuffer;
     std::map<std::pair<int, std::pair<in_addr_t, in_port_t>>, sockaddr_in> pingSet;
-    
     std::mutex mutexProcBuff;
     std::mutex mutexUsers;
     std::mutex mutexMsgBuff;
