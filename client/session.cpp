@@ -12,7 +12,7 @@ Session::Session() : client() {
         std::cout << "ip found in file, ip: " << buffer << std::endl;
         client.setServer(buffer.c_str());
     } else {
-        client.setServer("143.54.53.113"); 
+        client.setServer("192.168.0.6"); 
     }
     processingThread = std::thread(&Session::processBuffer, this);
 }

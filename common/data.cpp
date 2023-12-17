@@ -64,7 +64,7 @@ namespace twt {
         std::memcpy(&followerId, packet.payload, sizeof(followerId));
         followerId = ntohs(followerId);
 
-        std::string username(packet.payload + 2, sizeof(packet.payload - 2));
+        std::string username(packet.payload + 2, sizeof(packet.payload) - 2);
 
         return std::make_pair(followerId, username);
     }

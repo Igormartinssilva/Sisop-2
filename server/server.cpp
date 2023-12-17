@@ -33,6 +33,7 @@ void printMenu() {
     std::cout << RED << "3. " << RESET << "Save Database\n";
     std::cout << RED << "4. " << RESET << "Delete Database\n";
     std::cout << RED << "5. " << RESET << "Exit\n";
+    std::cout << RED << "6. " << RESET << "Load Database\n";
     std::cout << BLUE << "Choose an option: " << RESET;
 }
 
@@ -111,6 +112,13 @@ void UDPServer::start() {
 }
 
 void UDPServer::handlePackets() {
+    struct timeval tv;
+    tv.tv_sec = 0;
+    tv.tv_usec = 100000;  // 100 milliseconds
+    if (setsockopt(serverSocket, SOL_SOCKET, SO_RCVTIMEO, &tv, sizeof(tv)) < 0) {
+        perror("Error setting socket options");
+    }
+
     while (running) {
         sockaddr_in clientAddress;
         socklen_t clientSize = sizeof(clientAddress);
@@ -129,7 +137,7 @@ void UDPServer::handlePackets() {
 
 void UDPServer::processPacket() {
     while (running) {
-        std::lock_guard<std::mutex> lock(mutexProcBuff);
+        std::unique_lock<std::mutex> lock(mutexProcBuff);
         if (!processingBuffer.empty()) {
             std::string returnMessage("unknown type");
             std::pair<const sockaddr_in&, const std::vector<char>&> bufferValue = processingBuffer.front();
@@ -152,7 +160,8 @@ void UDPServer::processPacket() {
                     int followerId = payload.first;
                     std::string usernameToFollow = payload.second;
 
-            
+                    std::cout << "Follower Username: " << usernameToFollow << std::endl;    
+
                     int follewedId = usersList.getUserId(usernameToFollow);
                     if (follewedId == -1) {  // User not found
                         returnMessage = "ACK_FLW,User not found. Unable to follow.\n";
@@ -197,8 +206,10 @@ void UDPServer::processPacket() {
                     break;
                 }
             }
+            lock.unlock();
         } else {
-            
+            lock.unlock();
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 }
@@ -261,7 +272,7 @@ void UDPServer::processLogin() {
  
 void UDPServer::processMessages(){
     while(running){
-        std::lock_guard<std::mutex> lock(mutexMsgBuff);
+        std::unique_lock<std::mutex> lock(mutexMsgBuff);
         if (!messageBuffer.empty()){
             twt::Message msg = messageBuffer.front();
             std::unordered_set<int> userFollowers = this->followers.getFollowers(msg.sender.userId);
@@ -271,8 +282,10 @@ void UDPServer::processMessages(){
                     broadcastMessage(f);
             }
             messageBuffer.pop();
+            lock.unlock();
         } else {
-            
+            lock.unlock();
+            std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 }
