@@ -138,13 +138,6 @@ void UDPServer::handlePackets() {
     }
 }
 
-void UDPServer::updateSequenceNumber(const sockaddr_in& clientAddress, uint16_t newSequenceNumber) {
-    uint32_t ip = clientAddress.sin_addr.s_addr;
-    uint16_t port = clientAddress.sin_port;
-
-    lastSequenceNumber[ip][port] = newSequenceNumber;
-}
-
 
 void UDPServer::resetSequenceNumber(const sockaddr_in& clientAddress) {
     uint32_t ip = clientAddress.sin_addr.s_addr;
@@ -161,35 +154,7 @@ void UDPServer::resetSequenceNumber(const sockaddr_in& clientAddress) {
     // Se a entrada não existir, não é necessário fazer nada
 }
 
-// Adicione a implementação da função isPacketRepeated
-bool UDPServer::isPacketRepeated(const sockaddr_in& clientAddress, const twt::Packet& pack) {
-    uint32_t ip = clientAddress.sin_addr.s_addr;
-    uint16_t port = clientAddress.sin_port;
 
-    auto it = lastSequenceNumber.find(ip);
-    
-    if (it != lastSequenceNumber.end()) {
-        auto innerIt = it->second.find(port);
-        if (innerIt != it->second.end()) {
-            uint16_t storedSequenceNumber = innerIt->second;
-            // Atualizamos o último número de sequência para o cliente.
-            // Se o número do pacote recebido for menor ou igual ao último número armazenado,
-            // então consideramos como repetido e descartamos o pacote.
-            if (pack.sequence_number <= storedSequenceNumber) {
-                std::cout << "Received repeated packet. Discarding...\n";
-                return true; // Pacote repetido
-            }
-        }
-    }
-
-    
-    lastSequenceNumber[ip][port] = pack.sequence_number;
-
-     
-
-    // Pacote não repetido
-    return false;
-}
 
 void UDPServer::processPacket() {
     while (running) {
@@ -220,10 +185,11 @@ void UDPServer::processPacket() {
             std::cout << clientAddress.sin_addr.s_addr << "ip/n\n"; 
             std::cout << clientAddress.sin_port << "porta\n";
             std::cout << "isso funciona";
+            bool packetRepead = isPacketRepeated(pack, clientAddress);
+            packetBuffer.push_back({pack, clientAddress});
+            if (packetBuffer.size() > 1024) packetBuffer.pop_front();
             
-            updateSequenceNumber(clientAddress,pack.sequence_number);
-
-            if (!isPacketRepeated(clientAddress, pack)){
+            if (!packetRepead){
                 switch (pack.type) {
                     case twt::PacketType::Mensagem: {
                         std::pair<int, std::string> payload = twt::deserializeMessagePayload(pack.payload);
@@ -291,8 +257,22 @@ void UDPServer::processPacket() {
         }
     }
 }
+ 
 
-
+bool UDPServer::isPacketRepeated(const twt::Packet& pack, const sockaddr_in& clientAddress) {
+    uint32_t ip = clientAddress.sin_addr.s_addr;
+    uint16_t port = clientAddress.sin_port;
+    // Itere sobre o buffer de pacotes
+    for (const PacketInfo& storedPackInfo : packetBuffer) {
+        // Se um pacote no buffer tiver o mesmo IP, porta e número de sequência, retorne true
+        if (storedPackInfo.clientAddress.sin_addr.s_addr == ip && storedPackInfo.clientAddress.sin_port == port && storedPackInfo.packet.sequence_number == pack.sequence_number) {
+            std::cout << "Pacote repetido recebido" << std::endl;
+            return true;
+        }
+    }
+    // Se nenhum pacote repetido for encontrado, retorne false
+    return false;
+}
 
 void UDPServer::handleLogout(const sockaddr_in& clientAddress, int id) {
     this->usersList.logout(id);

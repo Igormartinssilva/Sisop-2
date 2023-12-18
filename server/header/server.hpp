@@ -20,6 +20,11 @@
 #include "../../database/database.hpp"
 #include "../../common/header/serialize.hpp"
 
+struct PacketInfo {
+    twt::Packet packet;
+    sockaddr_in clientAddress;
+};
+
 class UDPServer {
 public:
     UDPServer(int port);
@@ -58,7 +63,7 @@ std::unordered_map<uint32_t, std::unordered_map<uint16_t, uint16_t>> lastSequenc
     void processPingErase();
     void handleLogout(const sockaddr_in& clientAddress, int id);
     void sendBufferedMessages(int userId);
-    
+    bool isPacketRepeated(const twt::Packet& pack, const sockaddr_in& clientAddress);
     void broadcastMessage(int receiverId);
     bool UserConnected(int userId);
 
@@ -66,7 +71,7 @@ std::unordered_map<uint32_t, std::unordered_map<uint16_t, uint16_t>> lastSequenc
     std::queue<std::pair<const sockaddr_in&, const std::string>> processingBuffer;
 
     std::unordered_map<int, std::vector<sockaddr_in>> connectedUsers;  // User ID -> Set of connected sessions
-    
+    std::deque<PacketInfo> packetBuffer;
     std::unordered_map<int, std::queue<twt::Message>> userMessageBuffer, msgToSendBuffer;  // User ID -> Queue of stored messages
     std::queue<twt::Message> messageBuffer; // Messages of the tr
     std::queue<std::pair<std::pair<int, std::pair<in_addr_t, in_port_t>>, sockaddr_in>> pingQueue;
