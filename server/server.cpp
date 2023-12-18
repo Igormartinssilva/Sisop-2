@@ -21,6 +21,9 @@ UDPServer::UDPServer(int port) {
         perror("Error binding socket to port");
         return;
     }
+    // Inicialize o lastSequenceNumber no construtor
+    lastSequenceNumber.clear(); // Certifique-se de limpar qualquer valor anterior
+
 }
 
 UDPServer::~UDPServer() {
@@ -135,6 +138,59 @@ void UDPServer::handlePackets() {
     }
 }
 
+void UDPServer::updateSequenceNumber(const sockaddr_in& clientAddress, uint16_t newSequenceNumber) {
+    uint32_t ip = clientAddress.sin_addr.s_addr;
+    uint16_t port = clientAddress.sin_port;
+
+    lastSequenceNumber[ip][port] = newSequenceNumber;
+}
+
+
+void UDPServer::resetSequenceNumber(const sockaddr_in& clientAddress) {
+    uint32_t ip = clientAddress.sin_addr.s_addr;
+    uint16_t port = clientAddress.sin_port;
+
+    auto it = lastSequenceNumber.find(ip);
+    if (it != lastSequenceNumber.end()) {
+        auto innerIt = it->second.find(port);
+        if (innerIt != it->second.end()) {
+            // Reseta o último número de sequência para 0
+            innerIt->second = 0;
+        }
+    }
+    // Se a entrada não existir, não é necessário fazer nada
+}
+
+// Adicione a implementação da função isPacketRepeated
+bool UDPServer::isPacketRepeated(const sockaddr_in& clientAddress, const twt::Packet& pack) {
+    uint32_t ip = clientAddress.sin_addr.s_addr;
+    uint16_t port = clientAddress.sin_port;
+
+    auto it = lastSequenceNumber.find(ip);
+    
+    if (it != lastSequenceNumber.end()) {
+        auto innerIt = it->second.find(port);
+        if (innerIt != it->second.end()) {
+            uint16_t storedSequenceNumber = innerIt->second;
+            // Atualizamos o último número de sequência para o cliente.
+            // Se o número do pacote recebido for menor ou igual ao último número armazenado,
+            // então consideramos como repetido e descartamos o pacote.
+            if (pack.sequence_number <= storedSequenceNumber) {
+                std::cout << "Received repeated packet. Discarding...\n";
+                return true; // Pacote repetido
+            }
+        }
+    }
+
+    
+    lastSequenceNumber[ip][port] = pack.sequence_number;
+
+     
+
+    // Pacote não repetido
+    return false;
+}
+
 void UDPServer::processPacket() {
     while (running) {
         std::unique_lock<std::mutex> lock(mutexProcBuff);
@@ -147,73 +203,96 @@ void UDPServer::processPacket() {
 
             twt::Packet pack = twt::deserializePacket(packet);
 
-            switch (pack.type) {
-                case twt::PacketType::Mensagem: {
-                    std::pair<int, std::string> payload = twt::deserializeMessagePayload(pack.payload);
-                    messageBuffer.push({{usersList.getUsername(payload.first), payload.first}, payload.second});
-                    returnMessage = "ACK_MSG,Message request received\nSender ID: " + std::to_string(payload.first) + "\nMessage: " + payload.second + "\n";
-                    sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
-                    break;
-                }
-                case twt::PacketType::Follow: {
-                    std::pair<int, std::string> payload = twt::deserializeFollowPayload(pack.payload);
-                    std::cout << pack.payload << std::endl;
-                    int followerId = payload.first;
-                    std::string usernameToFollow = payload.second;
+            /*
+                * precisa construir uma funcao que verifique se um pacote esta repetido
+                * para isso precisa guardar o ultimo numero de pacote recebido
+                * e verificar se o pacote recebido nessa execucao eh repetido ou nao
+                * para um usuario em especifico
+                * e quando ele faz logout deve resetar o ultimo serialize number para 0
+            */
+            /*
+                * inicializar em 0 last sequence number na estrutura do servidor
+            */
+            // std::unordered_map<std::pair<int, int>, uint16_t> lastSequenceNumber;
+            // lastSequenceNumber[{clientAddress.sin_addr.s_addr, clientAddress.sin_port}] = 0 quando fizer logout
+            // if (lastSequenceNumber[{clientAddress.sin_addr.s_addr, clientAddress.sin_port}] < pack.sequence_number) entao eh repetido
+         
+            std::cout << clientAddress.sin_addr.s_addr << "ip/n\n"; 
+            std::cout << clientAddress.sin_port << "porta\n";
+            std::cout << "isso funciona";
+            
+            updateSequenceNumber(clientAddress,pack.sequence_number);
 
-                    std::cout << "User " << usersList.getUsername(followerId) << " is trying to follow " << usernameToFollow << std::endl;
-
-                    int follewedId = usersList.getUserId(usernameToFollow);
-                    if (follewedId == -1) {  // User not found
-                        returnMessage = "ACK_FLW,User not found. Unable to follow.\n";
-
-                    } else if (followerId == follewedId) { // User cannot follow himself
-                        returnMessage = "ACK_FLW,You cannot follow yourself. Try following someone else.\n";
-
-                    } else if (followers.isFollowing(followerId, follewedId)) { // User already following
-                        returnMessage = std::string("ACK_FLW,You are already following ") + usernameToFollow + std::string(".\n");
-
-                    } else {
-                        followers.follow(followerId, follewedId);
-                        usersList.follow(followerId, follewedId);
-                        saveDataBase();
-                        returnMessage = std::string("ACK_FLW,You are now following ") + usernameToFollow +  std::string(".\n");
+            if (!isPacketRepeated(clientAddress, pack)){
+                switch (pack.type) {
+                    case twt::PacketType::Mensagem: {
+                        std::pair<int, std::string> payload = twt::deserializeMessagePayload(pack.payload);
+                        messageBuffer.push({{usersList.getUsername(payload.first), payload.first}, payload.second});
+                        returnMessage = "ACK_MSG,Message request received\nSender ID: " + std::to_string(payload.first) + "\nMessage: " + payload.second + "\n";
+                        sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
+                        break;
                     }
+                    case twt::PacketType::Follow: {
+                        std::pair<int, std::string> payload = twt::deserializeFollowPayload(pack.payload);
+                        std::cout << pack.payload << std::endl;
+                        int followerId = payload.first;
+                        std::string usernameToFollow = payload.second;
 
-                    std::cout << returnMessage << std::endl;
-                    sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
-                    break;
-                }
-                case twt::PacketType::Login: {
-                    std::string username = twt::deserializeLoginPayload(pack.payload);
-                    loginBuffer.push({clientAddress, username});
-                    break;
-                }
-                case twt::PacketType::Exit: {
-                    int accountId = twt::deserializeExitPayload(pack.payload);
-                    handleLogout(clientAddress, accountId);
-                    returnMessage = "ACK_EXT,Exit request received\nUserId: " + std::to_string(accountId) + "\n";
-                    std::cout << returnMessage;
-                    sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
+                        std::cout << "User " << usersList.getUsername(followerId) << " is trying to follow " << usernameToFollow << std::endl;
 
-                    break;
-                }
-                case twt::PacketType::Ping: {
-                    int accountId = twt::deserializePingPayload(pack.payload);
-                    returnMessage = "ACK_PNG,Ping ack received\n";
-                    std::cout << returnMessage;
-                    pingQueue.push({{accountId, {clientAddress.sin_addr.s_addr, clientAddress.sin_port}}, clientAddress});
-                    
-                    break;
-                }
+                        int follewedId = usersList.getUserId(usernameToFollow);
+                        if (follewedId == -1) {  // User not found
+                            returnMessage = "ACK_FLW,User not found. Unable to follow.\n";
+
+                        } else if (followerId == follewedId) { // User cannot follow himself
+                            returnMessage = "ACK_FLW,You cannot follow yourself. Try following someone else.\n";
+
+                        } else if (followers.isFollowing(followerId, follewedId)) { // User already following
+                            returnMessage = std::string("ACK_FLW,You are already following ") + usernameToFollow + std::string(".\n");
+
+                        } else {
+                            followers.follow(followerId, follewedId);
+                            usersList.follow(followerId, follewedId);
+                            saveDataBase();
+                            returnMessage = std::string("ACK_FLW,You are now following ") + usernameToFollow +  std::string(".\n");
+                        }
+
+                        std::cout << returnMessage << std::endl;
+                        sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
+                        break;
+                    }
+                    case twt::PacketType::Login: {
+                        std::string username = twt::deserializeLoginPayload(pack.payload);
+                        loginBuffer.push({clientAddress, username});
+                        break;
+                    }
+                    case twt::PacketType::Exit: {
+                        int accountId = twt::deserializeExitPayload(pack.payload);
+                        handleLogout(clientAddress, accountId);
+                        returnMessage = "ACK_EXT,Exit request received\nUserId: " + std::to_string(accountId) + "\n";
+                        std::cout << returnMessage;
+                        sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
+
+                        break;
+                    }
+                    case twt::PacketType::Ping: {
+                        int accountId = twt::deserializePingPayload(pack.payload);
+                        returnMessage = "ACK_PNG,Ping ack received\n";
+                        std::cout << returnMessage;
+                        pingQueue.push({{accountId, {clientAddress.sin_addr.s_addr, clientAddress.sin_port}}, clientAddress});
+                        
+                        break;
+                    }
             }
             lock.unlock();
-        } else {
+        }} else {
             lock.unlock();
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
 }
+
+
 
 void UDPServer::handleLogout(const sockaddr_in& clientAddress, int id) {
     this->usersList.logout(id);
@@ -234,6 +313,9 @@ void UDPServer::handleLogout(const sockaddr_in& clientAddress, int id) {
         std::cout << "Closing user session: " << PURPLE << id << RESET << std::endl;
         std::string clientIPAddress = inet_ntoa(clientAddress.sin_addr);
         std::cout << "Endereço IP do cliente: " << PURPLE << clientIPAddress << RESET << std::endl;
+    
+        // Reseta o último número de sequência para 0 quando o cliente faz logout
+        resetSequenceNumber(clientAddress);
     }
 }
 

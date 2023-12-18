@@ -9,6 +9,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <queue>
+#include <functional>
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -32,7 +33,19 @@ public:
     void displayFollowersList();
 
     std::unordered_map<int, twt::UserInfo> getUsersList();
+
+    void resetSequenceNumber(const sockaddr_in& clientAddress);
+    // Adicionando função para verificar se o pacote é repetido
+    bool isPacketRepeated(const sockaddr_in& clientAddress, const twt::Packet& pack);
+    void updateSequenceNumber(const sockaddr_in& clientAddress, uint16_t newSequenceNumber);
+    bool isSequenceNumberValid(const sockaddr_in& clientAddress, const twt::Packet& pack);
+
 private:
+
+std::unordered_map<uint32_t, std::unordered_map<uint16_t, uint16_t>> lastSequenceNumber;
+
+    
+
     void handlePackets();
     void loadFollowersIntoUsersList();
     void saveFollowersFromUsersList();
@@ -65,6 +78,11 @@ private:
     std::mutex mutexLogBuff;
     std::mutex mutexLogPing;
     bool running;
+
+    
+
 };
+
+
 
 #endif

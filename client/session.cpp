@@ -149,6 +149,7 @@ void Session::transmitPacket(twt::PacketType type, std::string payload) {
     {
         retransmitAttempts++;
         n = client.sendPacket(type, timestamp, payload);
+        n = client.sendPacket(type, timestamp, payload);
         if (!packetTransmited()) nacks++;
         else break;
     }

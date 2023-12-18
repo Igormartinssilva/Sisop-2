@@ -1,5 +1,6 @@
-GabrielMachado;2,;4
+GabrielMachado;2,6,;4
 Gabriel Machado;;3
 Pedro;1,;2
-Luis;2,;1
+Luis;2,6,;1
 Dick;;5
+igor;;6
