@@ -46,10 +46,14 @@ public:
     bool isSequenceNumberValid(const sockaddr_in& clientAddress, const twt::Packet& pack);
 
 private:
+    bool isAckReceived;
 
-std::unordered_map<uint32_t, std::unordered_map<uint16_t, uint16_t>> lastSequenceNumber;
+    bool waitForAck();
+    void sendPacketWithRetransmission(const sockaddr_in& clientAddress, std::string returnMassage);
 
-    
+
+
+    std::unordered_map<uint32_t, std::unordered_map<uint16_t, uint16_t>> lastSequenceNumber;
 
     void handlePackets();
     void loadFollowersIntoUsersList();

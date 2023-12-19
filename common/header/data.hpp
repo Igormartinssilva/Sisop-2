@@ -42,6 +42,7 @@ namespace twt{
 	struct Message {
 		User sender;
 		std::string content;
+		uint16_t timestamp;
 	};
 
 

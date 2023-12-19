@@ -56,7 +56,7 @@ int Session::sendLogin(const std::string& username) {
 void Session::sendFollow(const std::string& username) {
     if (!isLogged()) return;
     std::string payload = twt::serializeFollowPayload(user.userId, username);
-    //std::cout << "user.userId no follow : " << user.userId << std::endl;
+  
     transmitPacket(twt::PacketType::Follow, payload);
 }
 
@@ -170,17 +170,20 @@ void Session::printYourMessages() {
         }
         twt::Message msg = decodeMessage(message);
         std::cout << PURPLE << msg.sender.username << RESET << " @" << msg.sender.username << RESET << ":" << std::endl;
-        std::cout << "> " << msg.content << std::endl << std::endl;
+    std::cout << "> " << msg.content << " (" << msg.timestamp << ")"<<std::endl << std::endl;
     }
 }
 
 twt::Message Session::decodeMessage(std::string str){
     twt::Message msg;
-    int i0, i1;
+    std::cout << "Decoding message: " << str << std::endl;
+    int i0, i1, i2;
     i0 = str.find(',');
     i1 = str.find(',', i0+1);
-    msg.sender.username = str.substr(0, i0);
-    msg.sender.userId = atoi(str.substr(i0+1, i1).c_str());
-    msg.content = str.substr(i1+1);
+    i2 = str.find(',', i1+1);
+    msg.timestamp = static_cast<int16_t>(atoi(str.substr(0, i0).c_str()));
+    msg.sender.username = str.substr(i0+1, i1-i0);
+    msg.sender.userId = atoi(str.substr(i1+1, i2-i1).c_str());
+    msg.content = str.substr(i2+1);
     return msg;
 }

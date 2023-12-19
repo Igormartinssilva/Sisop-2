@@ -182,9 +182,7 @@ void UDPServer::processPacket() {
             // lastSequenceNumber[{clientAddress.sin_addr.s_addr, clientAddress.sin_port}] = 0 quando fizer logout
             // if (lastSequenceNumber[{clientAddress.sin_addr.s_addr, clientAddress.sin_port}] < pack.sequence_number) entao eh repetido
          
-            std::cout << clientAddress.sin_addr.s_addr << "ip/n\n"; 
-            std::cout << clientAddress.sin_port << "porta\n";
-            std::cout << "isso funciona";
+            
             bool packetRepead = isPacketRepeated(pack, clientAddress);
             packetBuffer.push_back({pack, clientAddress});
             if (packetBuffer.size() > 1024) packetBuffer.pop_front();
@@ -193,14 +191,16 @@ void UDPServer::processPacket() {
                 switch (pack.type) {
                     case twt::PacketType::Mensagem: {
                         std::pair<int, std::string> payload = twt::deserializeMessagePayload(pack.payload);
-                        messageBuffer.push({{usersList.getUsername(payload.first), payload.first}, payload.second});
+                        uint16_t timestamp = pack.timestamp;
+                        messageBuffer.push({{usersList.getUsername(payload.first), payload.first}, payload.second, timestamp});
                         returnMessage = "ACK_MSG,Message request received\nSender ID: " + std::to_string(payload.first) + "\nMessage: " + payload.second + "\n";
+                        //UDPServer::sendPacketWithRetransmission( clientAddress, returnMessage); 
+                        
                         sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
                         break;
                     }
                     case twt::PacketType::Follow: {
                         std::pair<int, std::string> payload = twt::deserializeFollowPayload(pack.payload);
-                        std::cout << pack.payload << std::endl;
                         int followerId = payload.first;
                         std::string usernameToFollow = payload.second;
 
@@ -224,6 +224,7 @@ void UDPServer::processPacket() {
                         }
 
                         std::cout << returnMessage << std::endl;
+                        //UDPServer::sendPacketWithRetransmission( clientAddress, returnMessage);
                         sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
                         break;
                     }
@@ -237,6 +238,7 @@ void UDPServer::processPacket() {
                         handleLogout(clientAddress, accountId);
                         returnMessage = "ACK_EXT,Exit request received\nUserId: " + std::to_string(accountId) + "\n";
                         std::cout << returnMessage;
+                        //UDPServer::sendPacketWithRetransmission( clientAddress, returnMessage);
                         sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));
 
                         break;
@@ -339,7 +341,7 @@ void UDPServer::processMessages(){
         if (!messageBuffer.empty()){
             twt::Message msg = messageBuffer.front();
             std::unordered_set<int> userFollowers = this->followers.getFollowers(msg.sender.userId);
-           
+            
             for (auto f : userFollowers){
                 userMessageBuffer[f].push(msg);
                     broadcastMessage(f);
@@ -369,6 +371,7 @@ void UDPServer::sendBufferedMessages(int userId) {
                         message.content
                     );
                     sendto(serverSocket, str.c_str(), str.length(), 0, (struct sockaddr*)&userAddr, sizeof(userAddr));
+                    //UDPServer::sendPacketWithRetransmission(userAddr, str);
                 }
                 it->second.pop();
             }
@@ -388,11 +391,14 @@ void UDPServer::broadcastMessage(int receiverId) {
                     "\" to user @"<< usersList.getUsername(receiverId) << "(id " << std::to_string(receiverId) << ")" <<
                     " from user @" << message.sender.username << " (id " << message.sender.userId << ")" << std::endl;
                 std::string str(
+                    std::to_string(message.timestamp) + ',' +
                     message.sender.username + ',' + 
                     std::to_string(message.sender.userId) + ',' +
                     message.content
                 );
                 sendto(serverSocket, str.c_str(), str.length(), 0, (struct sockaddr*)&userAddr, sizeof(userAddr));
+                //UDPServer::sendPacketWithRetransmission(userAddr, str);
+
             }
         } else {
             // Se o usuário não estiver conectado, salve o userId e o message.sender.username em msgToSendBuffer
@@ -480,13 +486,14 @@ void UDPServer::saveDataBase(){
     users_vector = usersList.storageMap();
     // Para cada userId na usersList
 
-    for (auto user : users_vector){
+    /*for (auto user : users_vector){
         std::cout << "User ID: " << RED << user.getId() << RESET << ", Username: " << RED << user.getUsername() << RESET << std::endl;
         std::cout << "Followers: " << std::endl;
         for (auto followerId : user.getFollowers())
             std::cout << '\t' << PURPLE << followerId << RESET << ": " << BLUE << usersList.getUsername(followerId) << std::endl;
         std::cout << std::endl;
     }
+    */
     write_file(database_name, users_vector);
 }
 
@@ -525,6 +532,57 @@ void UDPServer::saveFollowersFromUsersList() {
         }
     }
 }
+
+bool UDPServer::waitForAck() {
+    auto start = std::chrono::high_resolution_clock::now();
+
+    while (true) {
+        auto end = std::chrono::high_resolution_clock::now();
+        std::chrono::duration<double> elapsed = end - start;
+
+        // Se passaram mais de 3 segundos
+        if (elapsed.count() > 0.3) {
+            std::cout << "Ack não recebido, retransmitindo..." << std::endl;
+            return false;
+        }
+
+        // Verificar se o ACK foi recebido
+        if (isAckReceived) {
+            std::cout << "Ack recebido com sucesso." << std::endl;
+            isAckReceived = false;
+            return true;
+        }
+
+        std::this_thread::sleep_for(std::chrono::milliseconds(10));
+    }
+
+}
+void UDPServer::sendPacketWithRetransmission(const sockaddr_in& clientAddress, std::string returnMessage) {
+   // uint16_t timestamp = getTimeStamp();
+    int retransmitAttempts = 0, n, nacks = 0;
+
+    while (retransmitAttempts < 3 && nacks <3) {
+         // Incrementa o número de tentativas de retransmissão
+        retransmitAttempts++;
+        // Envie o pacote
+         n = sendto(serverSocket, returnMessage.c_str(), BUFFER_SIZE, 0, (struct sockaddr*)&clientAddress, sizeof(clientAddress));  
+
+        // Verifique se o ACK foi recebido dentro do tempo limite
+        if (waitForAck()) {
+           nacks++;
+        }
+        else
+            break;
+        if (n < 0) {
+        perror("ERROR in sendto");
+        std::cerr << "Error code: " << errno << std::endl;
+        } 
+    }
+
+    if (nacks == 3) std::cout<< "Não foi possível se conectar ao cliente, tente novamente dentro de alguns instantes" << RED << RESET << std::endl;
+
+}
+
 
 int main() {
     UDPServer udpServer(PORT);

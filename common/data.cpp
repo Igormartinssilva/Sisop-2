@@ -69,8 +69,8 @@ void twt::UsersList::logout(int userId){
 
 int twt::UsersList::getUserId(std::string username){
     for (std::pair<const std::string, int> id : usersId) {
-        std::cout << "username: " << username << std::endl;
-        std::cout << "id.first: " << id.first << std::endl;
+       // std::cout << "username: " << username << std::endl;
+       // std::cout << "id.first: " << id.first << std::endl;
         if (std::strcmp(id.first.c_str(), username.c_str()) == 0){
             return id.second;
         }
