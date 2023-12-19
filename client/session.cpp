@@ -90,16 +90,16 @@ void Session::processBuffer() {
                     } else {
                         logged = false;
                     }
-                    std::cout << PURPLE << "Server Message: " << RESET << serverMsg << std::endl;
+                    //std::cout << PURPLE << "Server Message: " << RESET << serverMsg << std::endl;
                 }
                 else if (packet.substr(0, 7) == "ACK_FLW") {
-                    std::cout << PURPLE << "Server Message: " << RESET << packet.substr(8) << std::endl;
+                    //std::cout << PURPLE << "Server Message: " << RESET << packet.substr(8) << std::endl;
                 }
                 else if (packet.substr(0, 7) == "ACK_MSG") {
-                    std::cout << PURPLE << "Server Message: " << RESET << packet.substr(8) << std::endl;
+                    //std::cout << PURPLE << "Server Message: " << RESET << packet.substr(8) << std::endl;
                 }
                 else if (packet.substr(0, 7) == "ACK_EXT") {
-                    std::cout << PURPLE << "Server Message: " << RESET << packet.substr(8) << std::endl;
+                    //std::cout << PURPLE << "Server Message: " << RESET << packet.substr(8) << std::endl;
                 }
                 ackReceived = true;
             } else if (packet.substr(0, 3) == "PNG") {
@@ -132,7 +132,7 @@ bool Session::packetTransmited() {
         auto end = std::chrono::high_resolution_clock::now();
         std::chrono::duration<double> elapsed = end - start;
         if (elapsed.count() > 3.0) { // Se passaram mais de 3 segundos
-            std::cout << "Ack não recebido, retransmita" << std::endl;
+            //std::cout << "Ack não recebido, retransmita" << std::endl;
             return false;
         }
         std::this_thread::sleep_for(std::chrono::milliseconds(10)); // Dormir por 10 milissegundos para evitar uso excessivo de CPU
@@ -176,7 +176,7 @@ void Session::printYourMessages() {
 
 twt::Message Session::decodeMessage(std::string str){
     twt::Message msg;
-    std::cout << "Decoding message: " << str << std::endl;
+    //std::cout << "Decoding message: " << str << std::endl;
     int i0, i1, i2;
     i0 = str.find(',');
     i1 = str.find(',', i0+1);
